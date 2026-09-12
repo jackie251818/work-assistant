@@ -6,6 +6,8 @@
 ![技术栈](https://img.shields.io/badge/Electron-33+-47848F)
 ![版本](https://img.shields.io/badge/version-1.0.0-blue)
 ![许可](https://img.shields.io/badge/license-MIT-green)
+![下载](https://img.shields.io/github/v/release/jackie251818/work-assistant?display_name=tag&sort=semver)
+[![Release](https://img.shields.io/badge/⬇️_下载-Releases-0ea5e9)](https://github.com/jackie251818/work-assistant/releases/latest)
 
 ---
 
@@ -24,9 +26,31 @@
 
 ## 界面预览
 
+> 截图待补充，敬请期待 👀
+
 | 悬浮面板 | 任务设置 | 系统托盘 |
 | :---: | :---: | :---: |
 | 顶部显示日期，中间任务列表，底部进度条 | 完整的任务 CRUD，支持时间、周期、备注 | 常驻托盘，可一键显示/隐藏、打开设置 |
+
+---
+
+## 技术栈
+
+| 组件 | 技术 | 版本 | 说明 |
+| :---: | :---: | :---: | :---: |
+| 运行时 | Electron | 33+ | 跨平台桌面应用框架 |
+| 打包 | electron-builder | 25+ | NSIS 安装程序 |
+| 构建语言 | Node.js | 18+ | 仅用于构建/打包，运行时由 Electron 内嵌 |
+| 前端 | 原生 HTML/CSS/JS | — | 无框架依赖，零构建步骤 |
+| 数据 | JSON 文件 | — | 存储于 `%APPDATA%\work-assistant\tasks.json` |
+
+---
+
+## 环境要求
+
+- **操作系统**：Windows 10 / 11（64 位）
+- **开发运行**：Node.js 18+、npm（可选，仅开发/打包时需要）
+- **打包**：项目路径需为**纯英文**（中文路径会导致 NSIS makensis 失败）
 
 ---
 
@@ -34,7 +58,7 @@
 
 ### 方式一：安装版（推荐普通用户）
 
-下载最新的 `工作助手 Setup 1.0.0.exe`，双击运行即可。
+👉 [前往 GitHub Releases 下载](https://github.com/jackie251818/work-assistant/releases/latest) 最新的 `工作助手 Setup 1.0.0.exe`，双击运行即可。
 
 ### 方式二：开发运行
 
@@ -199,6 +223,52 @@ A：把旧电脑 `%APPDATA%\work-assistant\tasks.json` 拷到新电脑同路径�
 **Q：打包时报 NSIS makensis 错误？**
 
 A：项目路径含中文时 electron-builder 的 NSIS 打包会失败（makensis 按 ANSI 解析参数）。解决方法：把整个项目物理复制到纯英文路径（如 `D:\dr-build\app`）再打包。
+
+---
+
+## 贡献
+
+欢迎对本项目提出改进建议和代码贡献！
+
+### 开发流程
+
+```bash
+# 1. Fork 本仓库，克隆到本地
+git clone https://github.com/<your-username>/work-assistant.git
+cd work-assistant
+
+# 2. 创建特性分支
+git checkout -b feat/your-feature-name
+
+# 3. 安装依赖并开发
+npm install
+npm start    # 开发模式运行
+
+# 4. 提交并推送
+git add .
+git commit -m "feat: 你的改动描述"
+git push origin feat/your-feature-name
+
+# 5. 提交 Pull Request
+```
+
+### 代码风格
+
+- 主进程和渲染层统一使用原生 JavaScript（ES2020）
+- 渲染层无框架依赖，保持轻量
+- IPC 通道命名采用 `模块:动作` 格式（如 `panel:pin`、`task:toggle`）
+
+### 提交规范
+
+推荐使用 Conventional Commits 格式：
+
+| 前缀 | 说明 |
+| :---: | :--- |
+| `feat:` | 新功能 |
+| `fix:` | 修复 Bug |
+| `docs:` | 文档更新 |
+| `refactor:` | 重构（不改变功能） |
+| `chore:` | 构建/工具/依赖变更 |
 
 ---
 
