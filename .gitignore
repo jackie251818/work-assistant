@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+D:/dr-build/
+
+# Electron
+out/
+*.asar
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Trae
+.trae/
+
+# Temp build scripts (PowerShell synthetic click tests)
+tools/test-pin-click.ps1

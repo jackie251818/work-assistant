@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'" />
+  <title>设置 - 工作助手</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="settings-body">
+  <div class="settings-page">
+    <div class="settings-title">工作助手 · 设置</div>
+
+    <!-- 偏好设置 -->
+    <section class="card">
+      <div class="card-title">偏好设置</div>
+
+      <div class="pref-row">
+        <div>
+          <div class="pref-label">面板透明度</div>
+          <div class="pref-desc">调整桌面悬浮面板的背景透明程度</div>
+        </div>
+        <div class="opacity-box">
+          <input type="range" id="opacityRange" min="45" max="100" step="1" value="92" />
+          <span class="opacity-val" id="opacityVal">92%</span>
+        </div>
+      </div>
+
+      <div class="pref-row">
+        <div>
+          <div class="pref-label">开机自动启动</div>
+          <div class="pref-desc">登录 Windows 后自动显示工作助手面板</div>
+        </div>
+        <button class="switch" id="swAutoStart" title="开机自动启动"></button>
+      </div>
+
+      <div class="pref-row">
+        <div>
+          <div class="pref-label">到点系统通知</div>
+          <div class="pref-desc">任务到达设定时间时弹出 Windows 通知</div>
+        </div>
+        <button class="switch on" id="swNotify" title="到点系统通知"></button>
+      </div>
+    </section>
+
+    <!-- 任务管理 -->
+    <section class="card">
+      <div class="card-title">每日事项管理</div>
+      <div class="task-cards" id="taskCards"></div>
+      <button class="add-btn" id="btnAdd">＋ 添加新事项</button>
+
+      <!-- 新增 / 编辑表单 -->
+      <div class="form-panel" id="formPanel">
+        <div class="field">
+          <div class="form-label">事项名称（必填）</div>
+          <input type="text" id="fTitle" maxlength="60" placeholder="例如：提交日报、健身、喝水…" />
+        </div>
+
+        <div class="field">
+          <div class="form-label">备注（可选）</div>
+          <textarea id="fNote" maxlength="200" placeholder="补充说明，将显示在面板中"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="field">
+            <div class="form-label">重复周期</div>
+            <select id="fRepeat">
+              <option value="daily">每天</option>
+              <option value="weekly">每周指定星期</option>
+              <option value="monthly">每月指定日期</option>
+              <option value="once">仅指定一次</option>
+            </select>
+          </div>
+          <div class="field" id="fieldMonthDay" hidden>
+            <div class="form-label">每月几号（1-31）</div>
+            <input type="number" id="fMonthDay" min="1" max="31" value="1" />
+          </div>
+          <div class="field" id="fieldDate" hidden>
+            <div class="form-label">日期</div>
+            <input type="date" id="fDate" />
+          </div>
+        </div>
+
+        <div class="field" id="fieldWeek" hidden>
+          <div class="form-label">选择星期（可多选）</div>
+          <div class="week-picker" id="weekPicker">
+            <button type="button" class="week-dot" data-day="1">一</button>
+            <button type="button" class="week-dot" data-day="2">二</button>
+            <button type="button" class="week-dot" data-day="3">三</button>
+            <button type="button" class="week-dot" data-day="4">四</button>
+            <button type="button" class="week-dot" data-day="5">五</button>
+            <button type="button" class="week-dot" data-day="6">六</button>
+            <button type="button" class="week-dot" data-day="0">日</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="form-label">到点提醒（可选）</div>
+          <div class="remind-row">
+            <button type="button" class="switch" id="swRemind"></button>
+            <input type="time" id="fTime" hidden />
+            <span class="remind-off-msg" id="remindMsg">关闭后仅展示，不弹系统通知</span>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-ghost" id="btnCancel">取消</button>
+          <button class="btn btn-primary" id="btnSave">保存</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="shared/reminder-utils.js"></script>
+  <script src="settings.js"></script>
+</body>
+</html>
