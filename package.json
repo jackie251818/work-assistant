@@ -1,7 +1,7 @@
 {
   "name": "work-assistant",
   "version": "1.0.0",
-  "description": "Windows 工作助手 - 半透明置顶的每日待办面板",
+  "description": "Windows 工作助手 - 半透明每日待办悬浮面板",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
