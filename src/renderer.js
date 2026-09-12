@@ -5,6 +5,20 @@
 
   let state = { tasks: [], settings: { opacity: 0.92 } };
   let currentDay = '';
+  let isCollapsed = false;
+
+  /* 自动收起定时器 */
+  let collapseTimer = null;
+  function scheduleAutoCollapse() {
+    clearTimeout(collapseTimer);
+    if (state.settings.autoCollapse === false) return;
+    const delay = (state.settings.collapseDelay ?? 8) * 1000;
+    collapseTimer = setTimeout(() => setPanelCollapsed(true), delay);
+  }
+  function resetAutoCollapseTimer() {
+    if (isCollapsed) return;
+    scheduleAutoCollapse();
+  }
 
   const $ = (id) => document.getElementById(id);
   const listEl = $('taskList');
@@ -130,8 +144,56 @@
     const header = document.querySelector('.panel-header');
     btn.classList.toggle('off', !pinned);
     // 固定时禁止拖动（去掉 drag 类），取消固定时恢复拖动
-    header.classList.toggle('drag', !pinned);
+    header.classList.toggle('drag', !pinned && !isCollapsed);
     btn.title = pinned ? '已固定位置（无法拖动）' : '取消固定（可拖动）';
+  }
+
+  async function setPanelCollapsed(collapsed) {
+    if (collapsed === isCollapsed) return;
+    isCollapsed = collapsed;
+    await window.api.setCollapsed(collapsed);
+    document.body.classList.toggle('collapsed', collapsed);
+    // 直接用 inline style 隐藏 panel，确保生效
+    document.getElementById('panel').style.display = collapsed ? 'none' : '';
+    syncPinBtn(); // 收起态下不能拖动（即使没固定）
+    syncCollapseBtn();
+    if (collapsed) {
+      clearTimeout(collapseTimer);
+    } else {
+      scheduleAutoCollapse();
+    }
+  }
+
+  function syncCollapseBtn() {
+    const btn = $('btnHide');
+    if (isCollapsed) {
+      btn.textContent = '▲';
+      btn.title = '展开面板';
+      $('collapsedBar').hidden = false;
+      const pinVal = state.settings.pinned !== false;
+      $('collapsedBar').classList.toggle('drag', !pinVal);
+    } else {
+      btn.textContent = '—';
+      btn.title = '收起面板';
+      $('collapsedBar').hidden = true;
+    }
+  }
+
+  function renderCollapsedBar() {
+    const date = new Date();
+    const due = sortTasks(state.tasks, date);
+    const doneCount = due.filter((t) => U.isTaskDone(t, date)).length;
+    $('cbMonthDay').textContent = date.getDate();
+    $('cbWeek').textContent = U.WEEK_NAMES[date.getDay()];
+    $('cbSummary').textContent = `${due.length - doneCount}/${due.length} 项`;
+    // 下一条未完成任务
+    const next = due.find((t) => !U.isTaskDone(t, date));
+    if (next) {
+      $('cbNext').textContent = (next.time ? '⏰' + next.time + ' ' : '') + next.title;
+    } else {
+      $('cbNext').textContent = due.length ? '今日已全部完成 ✓' : '暂无安排';
+    }
+    $('btnPin2').classList.toggle('off', state.settings.pinned === false);
   }
 
   function renderAll() {
@@ -142,7 +204,9 @@
     const date = new Date();
     renderHeader(date);
     renderTasks();
+    renderCollapsedBar();
     syncPinBtn();
+    syncCollapseBtn();
   }
 
   /* ---------- 事件 ---------- */
@@ -158,13 +222,24 @@
   });
 
   $('btnSettings').addEventListener('click', () => window.api.openSettings());
-  $('btnHide').addEventListener('click', () => window.api.hidePanel());
-
-  /* 光标在面板内移动 → 立即解除穿透（穿透态下 mousemove 由 forward 转发到此处，
-     点击动作必然先产生移动，从而保证第一次点击就能落在按钮上） */
-  window.addEventListener('mousemove', () => window.api.notifyHover(), {
-    passive: true
+  $('btnHide').addEventListener('click', () => setPanelCollapsed(!isCollapsed));
+  $('btnExpand').addEventListener('click', () => setPanelCollapsed(false));
+  $('btnPin2').addEventListener('click', async () => {
+    const updated = await window.api.setPinned(state.settings.pinned === false);
+    state = updated;
+    syncPinBtn();
+    syncCollapseBtn();
   });
+
+  /* 光标移动：收起态 → 悬停自动展开；展开态 → 重置空闲自动收起计时器 */
+  window.addEventListener('mousemove', () => {
+    window.api.notifyHover();
+    if (isCollapsed && state.settings.autoCollapse !== false) {
+      setPanelCollapsed(false);
+    } else {
+      resetAutoCollapseTimer();
+    }
+  }, { passive: true });
   $('btnPin').addEventListener('click', async () => {
     const updated = await window.api.setPinned(state.settings.pinned === false);
     state = updated;
@@ -188,7 +263,13 @@
   /* ---------- 启动 ---------- */
   (async function init() {
     state = await window.api.getData();
+    isCollapsed = await window.api.isCollapsed();
+    if (isCollapsed) {
+      document.body.classList.add('collapsed');
+      document.getElementById('panel').style.display = 'none';
+    }
     currentDay = U.dateStr(new Date());
     renderAll();
+    scheduleAutoCollapse();
   })();
 })();

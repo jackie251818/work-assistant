@@ -4,7 +4,7 @@
 
 ![平台](https://img.shields.io/badge/platform-Windows-0078D4)
 ![技术栈](https://img.shields.io/badge/Electron-33+-47848F)
-![版本](https://img.shields.io/badge/version-1.0.0-blue)
+![版本](https://img.shields.io/badge/version-1.1.0-blue)
 ![许可](https://img.shields.io/badge/license-MIT-green)
 ![下载](https://img.shields.io/github/v/release/jackie251818/work-assistant?display_name=tag&sort=semver)
 [![Release](https://img.shields.io/badge/⬇️_下载-Releases-0ea5e9)](https://github.com/jackie251818/work-assistant/releases/latest)
@@ -16,6 +16,7 @@
 - **每日待办面板** — 半透明悬浮在桌面，展示今日任务、完成进度和时间提醒
 - **多周期提醒** — 支持每天 / 每周 / 每月 / 单次 四种重复模式
 - **到点系统通知** — 每个任务可设置具体时间，到点弹出 Windows 系统通知
+- **一键收起为迷你长条** — 点 `—` 把整个面板缩成 340×34 的横向摘要条，只显示日期、待办统计和下一条任务；鼠标悬停自动弹出，空闲 N 秒自动收起（均可在设置中调整）
 - **位置锁定** — 一键固定面板位置，防止误触拖走
 - **智能鼠标穿透** — 光标离开面板时自动穿透，让面板外区域的桌面图标可以点击
 - **本地数据存储** — 所有任务和设置仅保存在本机 `%APPDATA%` 目录，不上传任何服务器
@@ -58,7 +59,7 @@
 
 ### 方式一：安装版（推荐普通用户）
 
-👉 [前往 GitHub Releases 下载](https://github.com/jackie251818/work-assistant/releases/latest) 最新的 `工作助手 Setup 1.0.0.exe`，双击运行即可。
+👉 [前往 GitHub Releases 下载](https://github.com/jackie251818/work-assistant/releases/latest) 最新的 `工作助手 Setup 1.1.0.exe`，双击运行即可。
 
 ### 方式二：开发运行
 
@@ -88,9 +89,18 @@ npm run dist
 
 - **点击 📌 按钮** — 切换位置锁定。锁定后面板无法拖动，解锁后可自由拖动
 - **点击 ⚙ 按钮** — 打开任务设置窗口，添加/编辑/删除待办事项
-- **点击 — 按钮** — 隐藏面板（从系统托盘可恢复）
+- **点击 — 按钮** — 收起为迷你长条（340×34），只保留日期、待办统计和下一条任务预览；再点 ▲ 或鼠标悬停可展开
 - **按住面板头部拖动** — 移动面板位置（仅在解锁状态下可用）
 - **点击任务左侧圆圈** — 标记完成 / 取消完成
+
+### 收起 / 展开
+
+| 行为 | 说明 |
+| :---: | :--- |
+| 点 `—` | 整个面板缩成横向迷你长条，其余区域完全透明 |
+| 鼠标悬停长条 | 自动展开完整面板（可在设置中关闭） |
+| 展开后空闲 N 秒 | 自动收起（默认 8 秒，可在设置中调 3–60 秒） |
+| 点长条上的 ▲ | 手动展开 |
 
 ### 系统托盘
 
@@ -141,6 +151,8 @@ npm run dist
     "notify": true,
     "panelVisible": true,
     "pinned": true,
+    "autoCollapse": true,
+    "collapseDelay": 8,
     "bounds": { "x": 1563, "y": 126, "width": 340, "height": 540 }
   }
 }
@@ -273,6 +285,13 @@ git push origin feat/your-feature-name
 ---
 
 ## 更新日志
+
+### v1.1.0 (2026-09-12)
+
+- **新增：一键收起为迷你长条** — 点 `—` 把整个面板缩成 340×34 横向摘要条，显示日期、待办统计和下一条任务
+- 收起后鼠标悬停自动展开（可在设置中关闭）
+- 展开后空闲 N 秒自动收起（默认 8 秒，设置中可调 3–60 秒）
+- 修复：Electron 默认最小窗口高度导致 `setSize` 无法缩到 28px 的问题（收起前先 `setMinimumSize` 放开限制）
 
 ### v1.0.0 (2026-09-12)
 

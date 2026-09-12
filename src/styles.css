@@ -35,6 +35,7 @@ body {
   color: var(--text);
   user-select: none;
   overflow: hidden;
+  position: relative;
 }
 
 button {
@@ -353,6 +354,115 @@ textarea {
   color: var(--text-faint);
   border-top: 1px solid var(--line);
   text-align: center;
+}
+
+/* ================= 收起态 ================= */
+/* 收起时整个 panel 隐藏，只留一条干净的横向摘要长条 */
+body.collapsed .panel {
+  display: none !important;
+}
+body.collapsed {
+  overflow: hidden;
+}
+body.collapsed .collapsed-bar {
+  display: flex !important;
+}
+
+/* 收起态：干净横向长条 */
+.collapsed-bar {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  height: 100%;
+  background: rgba(10, 17, 32, 0.85);
+  border-radius: 8px;
+  border: 1px solid rgba(103, 200, 255, 0.18);
+}
+.collapsed-bar.drag {
+  -webkit-app-region: drag;
+}
+.cb-date {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.cb-date #cbMonthDay {
+  font-size: 16px;
+  color: #67e8f9;
+  line-height: 1;
+}
+.cb-week {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+.cb-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text);
+  overflow: hidden;
+  white-space: nowrap;
+}
+#cbSummary {
+  color: #67e8f9;
+  font-weight: 600;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.cb-next {
+  color: var(--text-dim);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cb-next::before {
+  content: "·";
+  margin-right: 4px;
+  color: var(--text-faint);
+}
+.cb-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.cb-btn {
+  width: 22px;
+  height: 22px;
+  font-size: 12px;
+  border-radius: 5px;
+  padding: 0;
+}
+
+/* 设置页 delay 输入 */
+.delay-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.delay-box input[type="number"] {
+  width: 56px;
+  padding: 6px 8px;
+  font-size: 13px;
+  color: var(--text);
+  background: rgba(10, 18, 34, 0.9);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  text-align: center;
+  color-scheme: dark;
+}
+.delay-box input[type="number"]:focus {
+  border-color: rgba(34, 211, 238, 0.55);
+}
+.delay-unit {
+  font-size: 12px;
+  color: var(--text-dim);
 }
 
 /* ============================================================

@@ -17,6 +17,8 @@
     $('opacityVal').textContent = pct + '%';
     $('swAutoStart').classList.toggle('on', !!s.autoStart);
     $('swNotify').classList.toggle('on', s.notify !== false);
+    $('swAutoCollapse').classList.toggle('on', s.autoCollapse !== false);
+    $('collapseDelay').value = s.collapseDelay ?? 8;
   }
 
   function renderTaskCards() {
@@ -119,6 +121,24 @@
     state.settings.notify = state.settings.notify === false;
     state = await window.api.saveData({ settings: state.settings });
     renderPrefs();
+  });
+
+  $('swAutoCollapse').addEventListener('click', async () => {
+    state.settings.autoCollapse = state.settings.autoCollapse === false;
+    state = await window.api.saveData({ settings: state.settings });
+    renderPrefs();
+  });
+
+  let delayTimer = null;
+  $('collapseDelay').addEventListener('input', async (e) => {
+    let v = Number(e.target.value);
+    if (!Number.isInteger(v) || v < 3) v = 3;
+    if (v > 60) v = 60;
+    state.settings.collapseDelay = v;
+    clearTimeout(delayTimer);
+    delayTimer = setTimeout(async () => {
+      state = await window.api.saveData({ settings: state.settings });
+    }, 200);
   });
 
   /* ================= 任务增删改 ================= */

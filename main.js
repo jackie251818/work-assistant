@@ -59,7 +59,9 @@ const DEFAULT_DATA = () => ({
     notify: true,
     panelVisible: true,
     pinned: true,
-    bounds: null
+    bounds: null,
+    autoCollapse: true,
+    collapseDelay: 8
   }
 });
 
@@ -102,6 +104,37 @@ function applyPinState() {
   const pinned = data.settings.pinned !== false;
   mainWindow.setMovable(!pinned);
 }
+
+/* ================= 面板收起/展开 ================= */
+const FULL_HEIGHT = 540;
+const COLLAPSED_HEIGHT = 34;
+let isCollapsed = false;
+
+function setCollapsed(collapsed) {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  if (collapsed === isCollapsed) return;
+  isCollapsed = collapsed;
+  if (collapsed) {
+    // 收起：缩成 340×28 横向长条 + 关闭穿透
+    mainWindow.setMinimumSize(300, 20);
+    mainWindow.setSize(340, COLLAPSED_HEIGHT);
+    mainWindow.setIgnoreMouseEvents(false);
+    cursorInsidePanel = true;
+  } else {
+    // 展开：恢复完整尺寸 + 重置穿透
+    mainWindow.setMinimumSize(300, 200);
+    mainWindow.setSize(340, FULL_HEIGHT);
+    cursorInsidePanel = false;
+    updateMouseIgnore();
+  }
+}
+
+ipcMain.handle('panel:setCollapsed', (_e, collapsed) => {
+  setCollapsed(!!collapsed);
+  return isCollapsed;
+});
+
+ipcMain.handle('panel:isCollapsed', () => isCollapsed);
 
 function createMainWindow() {
   const bounds = data.settings.bounds;
