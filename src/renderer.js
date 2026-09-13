@@ -181,8 +181,8 @@
       $('collapsedBar').classList.toggle('drag', !pinVal);
     } else {
       btn.textContent = '▲';
-      btn.title = collapseEnabled() ? '收起面板' : '收缩功能已在设置中关闭';
-      btn.classList.toggle('off', !collapseEnabled());
+      btn.title = '收起面板';
+      btn.classList.remove('off');
       $('collapsedBar').hidden = true;
     }
   }
@@ -250,8 +250,6 @@
     renderCollapsedBar();
     syncPinBtn();
     syncCollapseBtn();
-    // 收缩功能被关闭时，若面板正处于收起态则自动展开
-    if (!collapseEnabled() && isCollapsed) setPanelCollapsed(false);
   }
 
   /* ---------- 事件 ---------- */
@@ -269,8 +267,7 @@
   $('btnSettings').addEventListener('click', () => window.api.openSettings());
   $('btnMinimize').addEventListener('click', () => window.api.minimizePanel());
   $('btnHide').addEventListener('click', () => {
-    if (!collapseEnabled() && !isCollapsed) return; // 收缩功能关闭时按钮禁用
-    setPanelCollapsed(!isCollapsed);
+    setPanelCollapsed(!isCollapsed); // 手动收起/展开始终可用，与「启用收缩功能」无关
   });
   $('btnExpand').addEventListener('click', () => setPanelCollapsed(false));
   $('btnPin2').addEventListener('click', async () => {
