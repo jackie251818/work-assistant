@@ -9,9 +9,12 @@
 
   /* 自动收起定时器 */
   let collapseTimer = null;
+  function collapseEnabled() {
+    return state.settings.autoCollapse !== false;
+  }
   function scheduleAutoCollapse() {
     clearTimeout(collapseTimer);
-    if (state.settings.autoCollapse === false) return;
+    if (!collapseEnabled()) return;
     const delay = (state.settings.collapseDelay ?? 8) * 1000;
     collapseTimer = setTimeout(() => setPanelCollapsed(true), delay);
   }
@@ -169,12 +172,14 @@
     if (isCollapsed) {
       btn.textContent = '▲';
       btn.title = '展开面板';
+      btn.classList.remove('off');
       $('collapsedBar').hidden = false;
       const pinVal = state.settings.pinned !== false;
       $('collapsedBar').classList.toggle('drag', !pinVal);
     } else {
       btn.textContent = '—';
-      btn.title = '收起面板';
+      btn.title = collapseEnabled() ? '收起面板' : '收缩功能已在设置中关闭';
+      btn.classList.toggle('off', !collapseEnabled());
       $('collapsedBar').hidden = true;
     }
   }
@@ -196,17 +201,27 @@
     $('btnPin2').classList.toggle('off', state.settings.pinned === false);
   }
 
+  const THEMES = ['nebula', 'sunset', 'forest', 'sakura', 'violet', 'ink'];
+  function applyTheme() {
+    const t = THEMES.includes(state.settings.theme) ? state.settings.theme : 'nebula';
+    THEMES.forEach((name) => document.body.classList.remove('theme-' + name));
+    document.body.classList.add('theme-' + t);
+  }
+
   function renderAll() {
     document.documentElement.style.setProperty(
       '--opacity',
       String(state.settings.opacity ?? 0.92)
     );
+    applyTheme();
     const date = new Date();
     renderHeader(date);
     renderTasks();
     renderCollapsedBar();
     syncPinBtn();
     syncCollapseBtn();
+    // 收缩功能被关闭时，若面板正处于收起态则自动展开
+    if (!collapseEnabled() && isCollapsed) setPanelCollapsed(false);
   }
 
   /* ---------- 事件 ---------- */
@@ -222,7 +237,10 @@
   });
 
   $('btnSettings').addEventListener('click', () => window.api.openSettings());
-  $('btnHide').addEventListener('click', () => setPanelCollapsed(!isCollapsed));
+  $('btnHide').addEventListener('click', () => {
+    if (!collapseEnabled() && !isCollapsed) return; // 收缩功能关闭时按钮禁用
+    setPanelCollapsed(!isCollapsed);
+  });
   $('btnExpand').addEventListener('click', () => setPanelCollapsed(false));
   $('btnPin2').addEventListener('click', async () => {
     const updated = await window.api.setPinned(state.settings.pinned === false);
@@ -234,7 +252,7 @@
   /* 光标移动：收起态 → 悬停自动展开；展开态 → 重置空闲自动收起计时器 */
   window.addEventListener('mousemove', () => {
     window.api.notifyHover();
-    if (isCollapsed && state.settings.autoCollapse !== false) {
+    if (isCollapsed && collapseEnabled()) {
       setPanelCollapsed(false);
     } else {
       resetAutoCollapseTimer();

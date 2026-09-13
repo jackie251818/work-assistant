@@ -59,6 +59,7 @@ const DEFAULT_DATA = () => ({
     notify: true,
     panelVisible: true,
     pinned: true,
+    theme: 'nebula',
     bounds: null,
     autoCollapse: true,
     collapseDelay: 8

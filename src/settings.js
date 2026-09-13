@@ -10,6 +10,52 @@
   let formRemind = false;
 
   /* ================= 渲染 ================= */
+  const THEMES = [
+    { id: 'nebula', name: '星云蓝', dot: 'linear-gradient(135deg, #22d3ee, #818cf8)' },
+    { id: 'sunset', name: '落日橙', dot: 'linear-gradient(135deg, #fb923c, #f472b6)' },
+    { id: 'forest', name: '森林翠', dot: 'linear-gradient(135deg, #4ade80, #a3e635)' },
+    { id: 'sakura', name: '樱花粉', dot: 'linear-gradient(135deg, #f9a8d4, #c4b5fd)' },
+    { id: 'violet', name: '紫罗兰', dot: 'linear-gradient(135deg, #a78bfa, #f0abfc)' },
+    { id: 'ink', name: '水墨', dot: 'linear-gradient(135deg, #e2e8f0, #94a3b8)' }
+  ];
+
+  function applyTheme() {
+    const t = THEMES.some((x) => x.id === state.settings.theme)
+      ? state.settings.theme
+      : 'nebula';
+    THEMES.forEach((x) => document.body.classList.remove('theme-' + x.id));
+    document.body.classList.add('theme-' + t);
+  }
+
+  function renderThemeGrid() {
+    const grid = $('themeGrid');
+    grid.innerHTML = '';
+    for (const t of THEMES) {
+      const sw = document.createElement('button');
+      sw.className =
+        'theme-swatch' + (state.settings.theme === t.id ? ' active' : '');
+      sw.title = '使用「' + t.name + '」皮肤';
+
+      const dot = document.createElement('span');
+      dot.className = 'theme-dot';
+      dot.style.background = t.dot;
+      sw.appendChild(dot);
+
+      const name = document.createElement('span');
+      name.className = 'theme-name';
+      name.textContent = t.name;
+      sw.appendChild(name);
+
+      sw.addEventListener('click', async () => {
+        state.settings.theme = t.id;
+        state = await window.api.saveData({ settings: state.settings });
+        applyTheme();
+        renderThemeGrid();
+      });
+      grid.appendChild(sw);
+    }
+  }
+
   function renderPrefs() {
     const s = state.settings;
     const pct = Math.round((s.opacity ?? 0.92) * 100);
@@ -19,6 +65,8 @@
     $('swNotify').classList.toggle('on', s.notify !== false);
     $('swAutoCollapse').classList.toggle('on', s.autoCollapse !== false);
     $('collapseDelay').value = s.collapseDelay ?? 8;
+    applyTheme();
+    renderThemeGrid();
   }
 
   function renderTaskCards() {

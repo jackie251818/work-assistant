@@ -4,7 +4,7 @@
 
 ![平台](https://img.shields.io/badge/platform-Windows-0078D4)
 ![技术栈](https://img.shields.io/badge/Electron-33+-47848F)
-![版本](https://img.shields.io/badge/version-1.1.0-blue)
+![版本](https://img.shields.io/badge/version-1.2.0-blue)
 ![许可](https://img.shields.io/badge/license-MIT-green)
 ![下载](https://img.shields.io/github/v/release/jackie251818/work-assistant?display_name=tag&sort=semver)
 [![Release](https://img.shields.io/badge/⬇️_下载-Releases-0ea5e9)](https://github.com/jackie251818/work-assistant/releases/latest)
@@ -17,6 +17,7 @@
 - **多周期提醒** — 支持每天 / 每周 / 每月 / 单次 四种重复模式
 - **到点系统通知** — 每个任务可设置具体时间，到点弹出 Windows 系统通知
 - **一键收起为迷你长条** — 点 `—` 把整个面板缩成 340×34 的横向摘要条，只显示日期、待办统计和下一条任务；鼠标悬停自动弹出，空闲 N 秒自动收起（均可在设置中调整）
+- **6 款内置皮肤** — 星云蓝 / 落日橙 / 森林翠 / 樱花粉 / 紫罗兰 / 水墨极简，设置页一键切换即时生效
 - **位置锁定** — 一键固定面板位置，防止误触拖走
 - **智能鼠标穿透** — 光标离开面板时自动穿透，让面板外区域的桌面图标可以点击
 - **本地数据存储** — 所有任务和设置仅保存在本机 `%APPDATA%` 目录，不上传任何服务器
@@ -59,7 +60,7 @@
 
 ### 方式一：安装版（推荐普通用户）
 
-👉 [前往 GitHub Releases 下载](https://github.com/jackie251818/work-assistant/releases/latest) 最新的 `工作助手 Setup 1.1.0.exe`，双击运行即可。
+👉 [前往 GitHub Releases 下载](https://github.com/jackie251818/work-assistant/releases/latest) 最新的 `工作助手 Setup 1.2.0.exe`，双击运行即可。
 
 ### 方式二：开发运行
 
@@ -95,12 +96,27 @@ npm run dist
 
 ### 收起 / 展开
 
+> 可在设置 → 偏好设置中通过「启用收缩功能」开关整体关闭；关闭后 `—` 按钮变灰、面板不会自动收起。
+
 | 行为 | 说明 |
 | :---: | :--- |
 | 点 `—` | 整个面板缩成横向迷你长条，其余区域完全透明 |
-| 鼠标悬停长条 | 自动展开完整面板（可在设置中关闭） |
+| 鼠标悬停长条 | 自动展开完整面板 |
 | 展开后空闲 N 秒 | 自动收起（默认 8 秒，可在设置中调 3–60 秒） |
 | 点长条上的 ▲ | 手动展开 |
+
+### 皮肤主题
+
+设置 → 偏好设置 → 面板皮肤，6 款配色一键切换，悬浮面板与设置窗口同时即时换肤：
+
+| 皮肤 | 风格 |
+| :---: | :--- |
+| 星云蓝 | 青蓝 + 靛紫（默认） |
+| 落日橙 | 暖橙 + 玫粉 |
+| 森林翠 | 翠绿 + 黄绿 |
+| 樱花粉 | 粉色 + 淡紫 |
+| 紫罗兰 | 紫色 + 品红 |
+| 水墨 | 黑白灰极简 |
 
 ### 系统托盘
 
@@ -151,6 +167,7 @@ npm run dist
     "notify": true,
     "panelVisible": true,
     "pinned": true,
+    "theme": "nebula",
     "autoCollapse": true,
     "collapseDelay": 8,
     "bounds": { "x": 1563, "y": 126, "width": 340, "height": 540 }
@@ -285,6 +302,12 @@ git push origin feat/your-feature-name
 ---
 
 ## 更新日志
+
+### v1.2.0 (2026-09-13)
+
+- **新增：6 款内置皮肤** — 星云蓝（默认）/ 落日橙 / 森林翠 / 樱花粉 / 紫罗兰 / 水墨极简，设置页一键切换，面板与设置窗口即时换肤
+- 新增：收缩功能总开关 — 关闭后「—」按钮禁用，面板不收起；关闭时若处于收起态会自动展开
+- 优化：全站样式变量化，面板背景、日期渐变、按钮、进度条、收起长条均跟随皮肤
 
 ### v1.1.0 (2026-09-12)
 

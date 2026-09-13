@@ -1,9 +1,14 @@
 /* ============================================================
-   工作助手 - 共享样式（科技深蓝主题）
+   工作助手 - 共享样式（多皮肤主题系统）
+   默认皮肤：星云蓝（:root 即 nebula，其余皮肤通过 body.theme-* 覆盖）
    ============================================================ */
 :root {
   --accent: #22d3ee;
+  --accent-rgb: 34, 211, 238;
+  --accent-soft: #67e8f9;
   --accent-2: #818cf8;
+  --accent-2-rgb: 129, 140, 248;
+  --on-accent: #04222b;      /* 强调色上的前景文字（按钮等） */
   --success: #34d399;
   --danger: #f87171;
   --text: #e6eefc;
@@ -13,8 +18,199 @@
   --panel-bg: rgba(10, 17, 32, var(--opacity, 0.92));
   --panel-border: rgba(103, 200, 255, 0.18);
   --item-hover: rgba(120, 180, 255, 0.08);
+  --header-grad: linear-gradient(
+    135deg,
+    rgba(34, 211, 238, 0.12),
+    rgba(99, 102, 241, 0.08) 55%,
+    transparent
+  );
+  --date-grad: linear-gradient(160deg, #e8fbff, #67e8f9 55%, #22d3ee);
+  --date-glow: 0 0 24px rgba(34, 211, 238, 0.35);
+  --bar-bg: rgba(10, 17, 32, 0.85);
+  --settings-bg: radial-gradient(
+      1200px 400px at 80% -10%,
+      rgba(34, 211, 238, 0.07),
+      transparent 60%
+    ),
+    radial-gradient(900px 400px at 0% 0%, rgba(99, 102, 241, 0.08), transparent 55%),
+    #0b1220;
   --font: "Segoe UI Variable Text", "Segoe UI", "Microsoft YaHei UI",
     "PingFang SC", system-ui, sans-serif;
+}
+
+/* ---------- 皮肤：落日橙 ---------- */
+body.theme-sunset {
+  --accent: #fb923c;
+  --accent-rgb: 251, 146, 60;
+  --accent-soft: #fdba74;
+  --accent-2: #f472b6;
+  --accent-2-rgb: 244, 114, 182;
+  --on-accent: #2b1204;
+  --success: #a3e635;
+  --danger: #f87171;
+  --text: #fff1e6;
+  --text-dim: #c9a58f;
+  --text-faint: #97786a;
+  --line: rgba(251, 180, 120, 0.16);
+  --panel-bg: rgba(32, 18, 10, var(--opacity, 0.92));
+  --panel-border: rgba(251, 146, 60, 0.2);
+  --item-hover: rgba(251, 146, 60, 0.08);
+  --header-grad: linear-gradient(
+    135deg,
+    rgba(251, 146, 60, 0.14),
+    rgba(244, 114, 182, 0.08) 55%,
+    transparent
+  );
+  --date-grad: linear-gradient(160deg, #fff5ea, #fdba74 55%, #fb923c);
+  --date-glow: 0 0 24px rgba(251, 146, 60, 0.35);
+  --bar-bg: rgba(32, 18, 10, 0.88);
+  --settings-bg: radial-gradient(
+      1200px 400px at 80% -10%,
+      rgba(251, 146, 60, 0.08),
+      transparent 60%
+    ),
+    radial-gradient(900px 400px at 0% 0%, rgba(244, 114, 182, 0.08), transparent 55%),
+    #1c0f08;
+}
+
+/* ---------- 皮肤：森林翠 ---------- */
+body.theme-forest {
+  --accent: #4ade80;
+  --accent-rgb: 74, 222, 128;
+  --accent-soft: #86efac;
+  --accent-2: #a3e635;
+  --accent-2-rgb: 163, 230, 53;
+  --on-accent: #05230f;
+  --success: #4ade80;
+  --danger: #fb7185;
+  --text: #eafcf1;
+  --text-dim: #8fbfa3;
+  --text-faint: #5f8a70;
+  --line: rgba(120, 220, 160, 0.15);
+  --panel-bg: rgba(8, 24, 17, var(--opacity, 0.92));
+  --panel-border: rgba(74, 222, 128, 0.2);
+  --item-hover: rgba(74, 222, 128, 0.08);
+  --header-grad: linear-gradient(
+    135deg,
+    rgba(74, 222, 128, 0.13),
+    rgba(163, 230, 53, 0.07) 55%,
+    transparent
+  );
+  --date-grad: linear-gradient(160deg, #effff5, #86efac 55%, #4ade80);
+  --date-glow: 0 0 24px rgba(74, 222, 128, 0.32);
+  --bar-bg: rgba(8, 24, 17, 0.88);
+  --settings-bg: radial-gradient(
+      1200px 400px at 80% -10%,
+      rgba(74, 222, 128, 0.08),
+      transparent 60%
+    ),
+    radial-gradient(900px 400px at 0% 0%, rgba(163, 230, 53, 0.07), transparent 55%),
+    #071510;
+}
+
+/* ---------- 皮肤：樱花粉 ---------- */
+body.theme-sakura {
+  --accent: #f9a8d4;
+  --accent-rgb: 249, 168, 212;
+  --accent-soft: #fbcfe8;
+  --accent-2: #c4b5fd;
+  --accent-2-rgb: 196, 181, 253;
+  --on-accent: #331024;
+  --success: #6ee7b7;
+  --danger: #fb7185;
+  --text: #fdf0f7;
+  --text-dim: #c9a3b8;
+  --text-faint: #937182;
+  --line: rgba(250, 180, 215, 0.18);
+  --panel-bg: rgba(30, 13, 23, var(--opacity, 0.92));
+  --panel-border: rgba(249, 168, 212, 0.25);
+  --item-hover: rgba(249, 168, 212, 0.09);
+  --header-grad: linear-gradient(
+    135deg,
+    rgba(249, 168, 212, 0.15),
+    rgba(196, 181, 253, 0.08) 55%,
+    transparent
+  );
+  --date-grad: linear-gradient(160deg, #fff5fa, #fbcfe8 55%, #f9a8d4);
+  --date-glow: 0 0 24px rgba(249, 168, 212, 0.4);
+  --bar-bg: rgba(30, 13, 23, 0.88);
+  --settings-bg: radial-gradient(
+      1200px 400px at 80% -10%,
+      rgba(249, 168, 212, 0.09),
+      transparent 60%
+    ),
+    radial-gradient(900px 400px at 0% 0%, rgba(196, 181, 253, 0.08), transparent 55%),
+    #1c0d16;
+}
+
+/* ---------- 皮肤：紫罗兰 ---------- */
+body.theme-violet {
+  --accent: #a78bfa;
+  --accent-rgb: 167, 139, 250;
+  --accent-soft: #c4b5fd;
+  --accent-2: #f0abfc;
+  --accent-2-rgb: 240, 171, 252;
+  --on-accent: #1e1040;
+  --success: #6ee7b7;
+  --danger: #fb7185;
+  --text: #f3eeff;
+  --text-dim: #a99cc9;
+  --text-faint: #7a6d99;
+  --line: rgba(180, 160, 250, 0.17);
+  --panel-bg: rgba(17, 11, 32, var(--opacity, 0.92));
+  --panel-border: rgba(167, 139, 250, 0.25);
+  --item-hover: rgba(167, 139, 250, 0.09);
+  --header-grad: linear-gradient(
+    135deg,
+    rgba(167, 139, 250, 0.15),
+    rgba(240, 171, 252, 0.08) 55%,
+    transparent
+  );
+  --date-grad: linear-gradient(160deg, #f5f0ff, #c4b5fd 55%, #a78bfa);
+  --date-glow: 0 0 24px rgba(167, 139, 250, 0.4);
+  --bar-bg: rgba(17, 11, 32, 0.88);
+  --settings-bg: radial-gradient(
+      1200px 400px at 80% -10%,
+      rgba(167, 139, 250, 0.09),
+      transparent 60%
+    ),
+    radial-gradient(900px 400px at 0% 0%, rgba(240, 171, 252, 0.07), transparent 55%),
+    #100a1e;
+}
+
+/* ---------- 皮肤：水墨极简 ---------- */
+body.theme-ink {
+  --accent: #e2e8f0;
+  --accent-rgb: 226, 232, 240;
+  --accent-soft: #f8fafc;
+  --accent-2: #94a3b8;
+  --accent-2-rgb: 148, 163, 184;
+  --on-accent: #101418;
+  --success: #a8c5b8;
+  --danger: #d4a0a0;
+  --text: #f1f5f9;
+  --text-dim: #9aa5b1;
+  --text-faint: #64748b;
+  --line: rgba(220, 228, 240, 0.14);
+  --panel-bg: rgba(13, 15, 19, var(--opacity, 0.94));
+  --panel-border: rgba(226, 232, 240, 0.16);
+  --item-hover: rgba(226, 232, 240, 0.07);
+  --header-grad: linear-gradient(
+    135deg,
+    rgba(226, 232, 240, 0.1),
+    rgba(148, 163, 184, 0.06) 55%,
+    transparent
+  );
+  --date-grad: linear-gradient(160deg, #ffffff, #e2e8f0 55%, #94a3b8);
+  --date-glow: 0 0 24px rgba(226, 232, 240, 0.25);
+  --bar-bg: rgba(13, 15, 19, 0.9);
+  --settings-bg: radial-gradient(
+      1200px 400px at 80% -10%,
+      rgba(226, 232, 240, 0.06),
+      transparent 60%
+    ),
+    radial-gradient(900px 400px at 0% 0%, rgba(148, 163, 184, 0.06), transparent 55%),
+    #0c0e12;
 }
 
 * {
@@ -104,12 +300,7 @@ textarea {
   align-items: center;
   justify-content: space-between;
   padding: 16px 16px 12px;
-  background: linear-gradient(
-    135deg,
-    rgba(34, 211, 238, 0.12),
-    rgba(99, 102, 241, 0.08) 55%,
-    transparent
-  );
+  background: var(--header-grad);
   border-bottom: 1px solid var(--line);
 }
 
@@ -124,11 +315,11 @@ textarea {
   font-weight: 700;
   line-height: 1;
   letter-spacing: 1px;
-  background: linear-gradient(160deg, #e8fbff, #67e8f9 55%, #22d3ee);
+  background: var(--date-grad);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 24px rgba(34, 211, 238, 0.35);
+  text-shadow: var(--date-glow);
 }
 
 .date-unit {
@@ -169,8 +360,8 @@ textarea {
 }
 .icon-btn:hover {
   color: var(--accent);
-  background: rgba(34, 211, 238, 0.14);
-  border-color: rgba(34, 211, 238, 0.4);
+  background: rgba(var(--accent-rgb), 0.14);
+  border-color: rgba(var(--accent-rgb), 0.4);
 }
 .icon-btn.off {
   opacity: 0.45;
@@ -211,7 +402,7 @@ textarea {
   width: 0;
   border-radius: 3px;
   background: linear-gradient(90deg, var(--accent-2), var(--accent));
-  box-shadow: 0 0 10px rgba(34, 211, 238, 0.6);
+  box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.6);
   transition: width 0.35s ease;
 }
 
@@ -247,7 +438,7 @@ textarea {
 }
 .task-check:hover {
   border-color: var(--accent);
-  box-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
+  box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.4);
 }
 .task-item.done .task-check {
   background: linear-gradient(145deg, var(--success), #10b981);
@@ -306,14 +497,14 @@ textarea {
   line-height: 1.5;
 }
 .tag-time {
-  color: #67e8f9;
-  background: rgba(34, 211, 238, 0.12);
-  border: 1px solid rgba(34, 211, 238, 0.25);
+  color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.12);
+  border: 1px solid rgba(var(--accent-rgb), 0.25);
 }
 .tag-cycle {
-  color: #b9c6ff;
-  background: rgba(129, 140, 248, 0.12);
-  border: 1px solid rgba(129, 140, 248, 0.25);
+  color: rgba(var(--accent-2-rgb), 0.85);
+  background: rgba(var(--accent-2-rgb), 0.12);
+  border: 1px solid rgba(var(--accent-2-rgb), 0.25);
 }
 
 /* 空状态 */
@@ -375,9 +566,9 @@ body.collapsed .collapsed-bar {
   gap: 8px;
   padding: 0 10px;
   height: 100%;
-  background: rgba(10, 17, 32, 0.85);
+  background: var(--bar-bg);
   border-radius: 8px;
-  border: 1px solid rgba(103, 200, 255, 0.18);
+  border: 1px solid var(--panel-border);
 }
 .collapsed-bar.drag {
   -webkit-app-region: drag;
@@ -391,7 +582,7 @@ body.collapsed .collapsed-bar {
 }
 .cb-date #cbMonthDay {
   font-size: 16px;
-  color: #67e8f9;
+  color: var(--accent);
   line-height: 1;
 }
 .cb-week {
@@ -411,7 +602,7 @@ body.collapsed .collapsed-bar {
   white-space: nowrap;
 }
 #cbSummary {
-  color: #67e8f9;
+  color: var(--accent);
   font-weight: 600;
   font-size: 12px;
   flex-shrink: 0;
@@ -458,7 +649,7 @@ body.collapsed .collapsed-bar {
   color-scheme: dark;
 }
 .delay-box input[type="number"]:focus {
-  border-color: rgba(34, 211, 238, 0.55);
+  border-color: rgba(var(--accent-rgb), 0.55);
 }
 .delay-unit {
   font-size: 12px;
@@ -469,10 +660,7 @@ body.collapsed .collapsed-bar {
    设置窗口
    ============================================================ */
 .settings-body {
-  background:
-    radial-gradient(1200px 400px at 80% -10%, rgba(34, 211, 238, 0.07), transparent 60%),
-    radial-gradient(900px 400px at 0% 0%, rgba(99, 102, 241, 0.08), transparent 55%),
-    #0b1220;
+  background: var(--settings-bg);
   height: 100%;
 }
 
@@ -501,7 +689,7 @@ body.collapsed .collapsed-bar {
   height: 20px;
   border-radius: 2px;
   background: linear-gradient(180deg, var(--accent), var(--accent-2));
-  box-shadow: 0 0 10px rgba(34, 211, 238, 0.6);
+  box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.6);
 }
 
 .card {
@@ -509,6 +697,22 @@ body.collapsed .collapsed-bar {
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 18px 20px;
+}
+/* 各皮肤下卡片底色跟随主题面板色 */
+body.theme-sunset .card {
+  background: rgba(46, 26, 15, 0.7);
+}
+body.theme-forest .card {
+  background: rgba(13, 36, 26, 0.7);
+}
+body.theme-sakura .card {
+  background: rgba(43, 20, 33, 0.7);
+}
+body.theme-violet .card {
+  background: rgba(26, 18, 48, 0.7);
+}
+body.theme-ink .card {
+  background: rgba(22, 26, 33, 0.7);
 }
 
 .card-title {
@@ -559,7 +763,7 @@ input[type="range"]::-webkit-slider-thumb {
   height: 16px;
   border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 0 10px rgba(34, 211, 238, 0.7);
+  box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.7);
   cursor: pointer;
 }
 .opacity-val {
@@ -591,8 +795,8 @@ input[type="range"]::-webkit-slider-thumb {
   transition: all 0.2s;
 }
 .switch.on {
-  background: linear-gradient(90deg, #0891b2, var(--accent));
-  box-shadow: 0 0 10px rgba(34, 211, 238, 0.45);
+  background: linear-gradient(90deg, var(--accent-2), var(--accent));
+  box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.45);
 }
 .switch.on::after {
   left: 22px;
@@ -616,7 +820,7 @@ input[type="range"]::-webkit-slider-thumb {
   transition: border-color 0.15s;
 }
 .set-task:hover {
-  border-color: rgba(103, 200, 255, 0.3);
+  border-color: rgba(var(--accent-rgb), 0.3);
 }
 .set-task.off {
   opacity: 0.5;
@@ -675,14 +879,14 @@ input[type="range"]::-webkit-slider-thumb {
   font-size: 14px;
   font-weight: 600;
   letter-spacing: 1px;
-  color: #04222b;
-  background: linear-gradient(120deg, #67e8f9, var(--accent));
-  box-shadow: 0 4px 18px rgba(34, 211, 238, 0.3);
+  color: var(--on-accent);
+  background: linear-gradient(120deg, var(--accent-soft), var(--accent));
+  box-shadow: 0 4px 18px rgba(var(--accent-rgb), 0.3);
   transition: transform 0.12s, box-shadow 0.12s;
 }
 .add-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 22px rgba(34, 211, 238, 0.45);
+  box-shadow: 0 6px 22px rgba(var(--accent-rgb), 0.45);
 }
 
 /* 编辑表单 */
@@ -691,7 +895,7 @@ input[type="range"]::-webkit-slider-thumb {
   padding: 16px;
   border-radius: 12px;
   background: rgba(8, 15, 30, 0.85);
-  border: 1px solid rgba(103, 200, 255, 0.25);
+  border: 1px solid rgba(var(--accent-rgb), 0.25);
   display: none;
   flex-direction: column;
   gap: 12px;
@@ -729,8 +933,8 @@ input[type="range"]::-webkit-slider-thumb {
 .field input:focus,
 .field select:focus,
 .field textarea:focus {
-  border-color: rgba(34, 211, 238, 0.55);
-  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.1);
+  border-color: rgba(var(--accent-rgb), 0.55);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.1);
 }
 
 .form-row {
@@ -758,9 +962,9 @@ input[type="range"]::-webkit-slider-thumb {
   transition: all 0.15s;
 }
 .week-dot.on {
-  color: #04222b;
+  color: var(--on-accent);
   font-weight: 700;
-  background: linear-gradient(140deg, #67e8f9, var(--accent));
+  background: linear-gradient(140deg, var(--accent-soft), var(--accent));
   border-color: transparent;
 }
 
@@ -800,8 +1004,8 @@ input[type="range"]::-webkit-slider-thumb {
   border-color: rgba(120, 180, 255, 0.4);
 }
 .btn-primary {
-  color: #04222b;
-  background: linear-gradient(120deg, #67e8f9, var(--accent));
+  color: var(--on-accent);
+  background: linear-gradient(120deg, var(--accent-soft), var(--accent));
 }
 .btn-primary:disabled {
   opacity: 0.4;
@@ -813,4 +1017,49 @@ input[type="range"]::-webkit-slider-thumb {
   color: var(--text-faint);
   font-size: 13px;
   padding: 22px 0;
+}
+
+/* ============================================================
+   皮肤选择器（设置页）
+   ============================================================ */
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+}
+.theme-swatch {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 11px;
+  border-radius: 10px;
+  background: rgba(120, 170, 230, 0.06);
+  border: 1px solid var(--line);
+  transition: border-color 0.15s, transform 0.12s;
+}
+.theme-swatch:hover {
+  transform: translateY(-1px);
+  border-color: rgba(var(--accent-rgb), 0.4);
+}
+.theme-swatch.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.18);
+}
+.theme-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+}
+.theme-name {
+  font-size: 12px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.theme-swatch.active .theme-name {
+  color: var(--text);
+  font-weight: 600;
 }
