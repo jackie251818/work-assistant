@@ -44,6 +44,7 @@
 | :---: | :---: | :---: | :---: |
 | 运行时 | Electron | 33+ | 跨平台桌面应用框架 |
 | 打包 | electron-builder | 25+ | NSIS 安装程序 |
+| 自动更新 | electron-updater | 6+ | 基于 GitHub Releases 的增量更新 |
 | 构建语言 | Node.js | 18+ | 仅用于构建/打包，运行时由 Electron 内嵌 |
 | 前端 | 原生 HTML/CSS/JS | — | 无框架依赖，零构建步骤 |
 | 数据 | JSON 文件 | — | 存储于 `%APPDATA%\work-assistant\tasks.json` |
@@ -62,7 +63,9 @@
 
 ### 方式一：安装版（推荐普通用户）
 
-👉 [前往 GitHub Releases 下载](https://github.com/jackie251818/work-assistant/releases/latest) 最新的 `工作助手 Setup 1.2.0.exe`，双击运行即可。
+👉 [前往 GitHub Releases 下载](https://github.com/jackie251818/work-assistant/releases/latest) 最新的 `work-assistant-setup-x.y.z.exe`，双击运行即可（支持覆盖安装，任务数据不受影响）。
+
+**v1.3.0 起支持自动更新**：安装后应用会自动检测并后台下载新版本，下载完成后点一下通知即可重启安装，无需重新手动下载。仅 v1.2.0 及更早的用户需要最后一次手动安装 v1.3.0+。
 
 ### 方式二：开发运行
 
@@ -82,7 +85,10 @@ npm start
 npm run dist
 ```
 
-> **打包提示**：如果项目路径包含中文，electron-builder 的 NSIS 打包可能失败（makensis 按 ANSI 解析参数）。解决方法是把整个项目（含 `node_modules`）**物理复制到纯英文路径**（如 `D:\dr-build\app`）再执行 `npm run dist`。
+> **打包提示**：
+> - 如果项目路径包含中文，electron-builder 的 NSIS 打包会失败（makensis 按 ANSI 解析参数）。解决方法是把整个项目（含 `node_modules`）**物理复制到纯英文路径**（如 `D:\dr-build\app`）再执行 `npm run dist`。
+> - 打包脚本已固化 `--publish never`（只在本地产包，不会误触发线上发布），产物为 `work-assistant-setup-x.y.z.exe` + `latest.yml` + `.blockmap`（自动更新三件套）。
+> - **发布新版本到线上、让用户收到自动更新的完整步骤见 [docs/RELEASING.md](docs/RELEASING.md)。**
 
 ---
 
@@ -125,6 +131,7 @@ npm run dist
 右键托盘图标可：
 - 显示 / 隐藏面板
 - 打开设置窗口
+- 检查更新 / 下载完成后重启安装新版本
 - 切换开机自启
 - 切换到点系统通知
 - 退出程序
@@ -185,10 +192,13 @@ npm run dist
 
 ```
 work-assistant/
-├── main.js                 # 主进程：窗口创建、IPC、托盘、数据存储、鼠标穿透
+├── main.js                 # 主进程：窗口创建、IPC、托盘、数据存储、鼠标穿透、自动更新
 ├── preload.js              # 安全桥接：向渲染进程暴露受控 API
 ├── package.json
 ├── LICENSE
+├── README.md
+├── docs/
+│   └── RELEASING.md        # 发布新版本的标准流程（打包→Release→验证→排错）
 ├── assets/
 │   ├── icon.ico            # 应用图标（多尺寸）
 │   ├── icon.png            # 图标 PNG 版本
@@ -235,6 +245,14 @@ set ELECTRON_MIRROR=https://registry.npmmirror.com/-/binary/electron/
 set ELECTRON_BUILDER_BINARIES_MIRROR=https://registry.npmmirror.com/-/binary/electron-builder-binaries/
 ```
 
+### 自动更新
+
+- 更新源由 package.json `build.publish` 声明（GitHub Releases），打包时写入安装目录 `resources/app-update.yml`，无需内置任何 token
+- 主进程 `initAutoUpdater()`（main.js）在启动 6 秒后静默检查：发现新版自动后台下载（有 blockmap 时走差分增量），完成后弹系统通知，点击即 `quitAndInstall()`；设置页与托盘菜单提供手动入口
+- 状态机：`checking → available → downloading → downloaded`，另有 `not-available / error`；通过 IPC `update:status` 广播给设置窗口
+- 用户主动操作才弹通知，静默检查失败只写 `debug.log`，不打扰日常使用
+- 完整发布 SOP 见 [docs/RELEASING.md](docs/RELEASING.md)
+
 ---
 
 ## 常见问题
@@ -261,7 +279,7 @@ A：应用启动后会从本仓库 GitHub Releases 拉取 `latest.yml` 判断是
 
 **Q：发新版 Release 时要上传哪些文件？**
 
-A：三个文件缺一不可，且必须在同一个 Release 中：`work-assistant-setup-x.y.z.exe`、`latest.yml`、`work-assistant-setup-x.y.z.exe.blockmap`（electron-builder 打包产物，`latest.yml` 中的文件名必须与 Release 资产名完全一致）。
+A：三个文件缺一不可，且必须来自同一次打包、放在同一个正式 Release 中：`work-assistant-setup-x.y.z.exe`、`latest.yml`、`work-assistant-setup-x.y.z.exe.blockmap`（`latest.yml` 中的文件名必须与 Release 资产名逐字一致，不可手改）。完整的版本号规则、打包命令、Release 上传脚本和发布后验证步骤见 **[docs/RELEASING.md](docs/RELEASING.md)**。
 
 ---
 
@@ -308,6 +326,10 @@ git push origin feat/your-feature-name
 | `docs:` | 文档更新 |
 | `refactor:` | 重构（不改变功能） |
 | `chore:` | 构建/工具/依赖变更 |
+
+### 发布新版本
+
+维护者发版（升版本号 → 英文路径打包 → 上传 GitHub Release 三件套 → 发布后验证）的完整标准流程与排错手册：[docs/RELEASING.md](docs/RELEASING.md)。
 
 ---
 
