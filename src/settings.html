@@ -70,6 +70,24 @@
       </div>
     </section>
 
+    <!-- 关于与更新 -->
+    <section class="card">
+      <div class="card-title">关于与更新</div>
+      <div class="pref-row">
+        <div>
+          <div class="pref-label">当前版本 <span class="version-tag" id="appVersion">v-</span></div>
+          <div class="pref-desc" id="updateMsg">启动后自动检查更新；发现新版会在后台下载，完成后提示你重启安装</div>
+          <div class="update-progress" id="updateProgress" hidden>
+            <div class="update-progress-bar" id="updateProgressBar"></div>
+          </div>
+        </div>
+        <div class="update-actions">
+          <button class="btn btn-primary" id="btnCheckUpdate">检查更新</button>
+          <button class="btn btn-primary" id="btnInstallUpdate" hidden>重启并安装</button>
+        </div>
+      </div>
+    </section>
+
     <!-- 任务管理 -->
     <section class="card">
       <div class="card-title">每日事项管理</div>

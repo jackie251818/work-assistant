@@ -618,6 +618,19 @@ body.collapsed .collapsed-bar {
   margin-right: 4px;
   color: var(--text-faint);
 }
+.cb-next.cb-flip {
+  animation: cbFlip 0.5s ease;
+}
+@keyframes cbFlip {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 .cb-actions {
   display: flex;
   gap: 2px;
@@ -654,6 +667,46 @@ body.collapsed .collapsed-bar {
 .delay-unit {
   font-size: 12px;
   color: var(--text-dim);
+}
+
+/* 设置页：关于与更新 */
+.version-tag {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.12);
+  border: 1px solid rgba(var(--accent-rgb), 0.3);
+  border-radius: 6px;
+  padding: 1px 7px;
+  margin-left: 4px;
+}
+.update-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.update-actions .btn {
+  min-width: 96px;
+}
+.update-progress {
+  margin-top: 8px;
+  width: 100%;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(148, 163, 184, 0.22);
+  overflow: hidden;
+}
+.update-progress-bar {
+  height: 100%;
+  width: 0;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent-2), var(--accent));
+  box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.6);
+  transition: width 0.25s ease;
+}
+#updateMsg.update-error {
+  color: #f87171;
 }
 
 /* ============================================================

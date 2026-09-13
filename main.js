@@ -11,6 +11,7 @@ const {
 const path = require('path');
 const fs = require('fs');
 const U = require('./src/shared/reminder-utils');
+const { autoUpdater } = require('electron-updater');
 
 /* ================= 应用标识与数据目录 ================= */
 // 项目由"桌面提示"更名为"工作助手"，沿用旧数据（自动迁移 tasks.json）
@@ -27,6 +28,18 @@ if (
   );
 }
 app.setPath('userData', DATA_DIR);
+
+/* ================= 诊断日志（排查面板意外消失） ================= */
+const DEBUG_LOG = path.join(DATA_DIR, 'debug.log');
+function dbg(msg) {
+  try {
+    fs.appendFileSync(
+      DEBUG_LOG,
+      `[${new Date().toISOString()}] ${msg}\n`,
+      'utf-8'
+    );
+  } catch (_) {}
+}
 
 /* ================= 数据存储 ================= */
 const DATA_FILE = () => path.join(app.getPath('userData'), 'tasks.json');
@@ -70,7 +83,8 @@ let data = null;
 
 function loadData() {
   try {
-    const raw = fs.readFileSync(DATA_FILE(), 'utf-8');
+    // 去掉可能存在的 UTF-8 BOM（记事本等编辑器保存时会带，直接 parse 会抛错回退默认值）
+    const raw = fs.readFileSync(DATA_FILE(), 'utf-8').replace(/^\uFEFF/, '');
     const parsed = JSON.parse(raw);
     const d = DEFAULT_DATA();
     return {
@@ -95,6 +109,9 @@ let mainWindow = null;
 let settingsWindow = null;
 let tray = null;
 let notifyTimer = null;
+// 用户是否主动要求隐藏面板（托盘菜单 / panel:hide）。
+// 用于区分系统动作（Win+D、显示桌面）导致的意外隐藏，后者需自动恢复。
+let userHidden = false;
 const notifiedKeys = new Set();
 
 const ASSET = (name) => path.join(__dirname, 'assets', name);
@@ -190,6 +207,35 @@ function createMainWindow() {
     }, 300);
   };
   mainWindow.on('move', persistBounds);
+
+  // —— 防止面板被系统动作（Win+D / 显示桌面 / 误触托盘）意外藏起来 ——
+  mainWindow.on('minimize', (e) => {
+    dbg('event: minimize (userHidden=' + userHidden + ')');
+    // 面板设计上不允许最小化，直接还原
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.restore();
+    }
+  });
+  mainWindow.on('hide', () => {
+    dbg('event: hide (userHidden=' + userHidden + ') visible=' +
+      (mainWindow && !mainWindow.isDestroyed() ? mainWindow.isVisible() : '?'));
+    // 非用户主动隐藏（如 Windows"显示桌面"给分层窗口发的 SW_HIDE）→ 立即恢复
+    if (!userHidden && mainWindow && !mainWindow.isDestroyed()) {
+      setImmediate(() => {
+        if (!userHidden && mainWindow && !mainWindow.isDestroyed() &&
+            data.settings.panelVisible !== false) {
+          dbg('auto-recover: show after unexpected hide');
+          mainWindow.show();
+        }
+      });
+    }
+  });
+  mainWindow.on('show', () => dbg('event: show'));
+  mainWindow.on('blur', () => {
+    // blur 频繁，仅在隐藏状态异常时帮助诊断（默认注释，需要时打开）
+    // dbg('event: blur');
+  });
+
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
@@ -225,10 +271,13 @@ function createSettingsWindow() {
 
 function togglePanel() {
   if (!mainWindow) return;
+  dbg('togglePanel called, visible=' + mainWindow.isVisible());
   if (mainWindow.isVisible()) {
+    userHidden = true;
     mainWindow.hide();
     data.settings.panelVisible = false;
   } else {
+    userHidden = false;
     mainWindow.show();
     mainWindow.setIgnoreMouseEvents(false);
     data.settings.panelVisible = true;
@@ -265,6 +314,7 @@ function updateTrayMenu() {
       }
     },
     { type: 'separator' },
+    makeUpdateMenuItem(),
     { label: '退出', click: () => app.quit() }
   ]);
   tray.setContextMenu(menu);
@@ -277,6 +327,153 @@ function createTray() {
   updateTrayMenu();
   tray.on('click', togglePanel);
   tray.on('double-click', createSettingsWindow);
+}
+
+/* ================= 自动更新（electron-updater · GitHub Releases） =================
+ * 更新源由 package.json build.publish 声明，打包时写入 resources/app-update.yml。
+ * 发布新版时必须把 Setup exe + latest.yml + exe.blockmap 一并传到同一个 GitHub Release，
+ * 且 latest.yml 中的文件名必须与 Release 资产名完全一致（故产物名固定为 ASCII）。
+ */
+const updateState = {
+  status: 'idle', // idle | checking | available | downloading | downloaded | not-available | error | unsupported
+  currentVersion: app.getVersion(),
+  version: null, // 检测到的新版本号
+  percent: 0,
+  message: '',
+  checkedAt: null
+};
+let updateManual = false; // 本次检查是否由用户手动触发（决定是否弹"已是最新/失败"通知）
+
+// electron-updater 的错误对象 message 可能含多行请求头，只取首行用于日志与界面提示
+function briefErr(m) {
+  return String((m && m.message) || m || '').split('\n')[0];
+}
+
+function commitUpdateState(patch) {
+  Object.assign(updateState, patch, { checkedAt: new Date().toISOString() });
+  dbg(
+    'updater: ' + updateState.status +
+    (updateState.version ? ' v' + updateState.version : '') +
+    (updateState.percent ? ' ' + updateState.percent + '%' : '') +
+    (updateState.message ? ' | ' + updateState.message : '')
+  );
+  if (settingsWindow && !settingsWindow.isDestroyed()) {
+    settingsWindow.webContents.send('update:status', updateState);
+  }
+  updateTrayMenu();
+}
+
+function showUpdateNotification(title, body, onClick) {
+  if (!Notification.isSupported()) return;
+  const n = new Notification({ title, body });
+  if (onClick) n.on('click', onClick);
+  n.show();
+}
+
+function makeUpdateMenuItem() {
+  const busy = updateState.status === 'checking' || updateState.status === 'downloading';
+  if (updateState.status === 'downloaded') {
+    return {
+      label: '重启并安装新版本 v' + updateState.version,
+      click: () => autoUpdater.quitAndInstall()
+    };
+  }
+  if (updateState.status === 'downloading') {
+    return { label: '正在下载新版本… ' + updateState.percent + '%', enabled: false };
+  }
+  if (updateState.status === 'checking') {
+    return { label: '正在检查更新…', enabled: false };
+  }
+  return {
+    label: '检查更新',
+    enabled: !busy,
+    click: () => { checkForUpdates(true); }
+  };
+}
+
+function initAutoUpdater() {
+  autoUpdater.autoDownload = true; // 发现新版后自动后台下载
+  autoUpdater.autoInstallOnAppQuit = true; // 用户正常退出时若已下载则顺手安装
+  autoUpdater.logger = {
+    info: (m) => dbg('updater[info] ' + m),
+    debug: () => {}, // 下载分片日志过多，不记录
+    warn: (m) => dbg('updater[warn] ' + briefErr(m)),
+    error: (m) => dbg('updater[error] ' + briefErr(m))
+  };
+
+  autoUpdater.on('checking-for-update', () => {
+    commitUpdateState({ status: 'checking', percent: 0, message: '正在检查更新…' });
+  });
+  autoUpdater.on('update-available', (info) => {
+    commitUpdateState({
+      status: 'available',
+      version: info.version,
+      percent: 0,
+      message: '发现新版本 v' + info.version + '，正在后台下载…'
+    });
+    showUpdateNotification(
+      '发现新版本 v' + info.version,
+      '正在后台下载，完成后会通知你重启安装。'
+    );
+  });
+  autoUpdater.on('update-not-available', () => {
+    commitUpdateState({
+      status: 'not-available',
+      version: null,
+      percent: 0,
+      message: '当前已是最新版本（v' + app.getVersion() + '）'
+    });
+    if (updateManual) {
+      showUpdateNotification('已是最新版本', '当前版本 v' + app.getVersion());
+    }
+  });
+  autoUpdater.on('download-progress', (p) => {
+    const percent = Math.round(p.percent || 0);
+    commitUpdateState({
+      status: 'downloading',
+      percent,
+      message: '正在下载新版本… ' + percent + '%'
+    });
+  });
+  autoUpdater.on('update-downloaded', (info) => {
+    commitUpdateState({
+      status: 'downloaded',
+      version: info.version,
+      percent: 100,
+      message: '新版本 v' + info.version + ' 已就绪，重启后完成安装'
+    });
+    showUpdateNotification(
+      '新版本已就绪 v' + info.version,
+      '点击此通知立即重启并安装更新（也可稍后点托盘菜单安装）。',
+      () => autoUpdater.quitAndInstall()
+    );
+  });
+  autoUpdater.on('error', (err) => {
+    const msg = briefErr(err || '未知错误');
+    commitUpdateState({ status: 'error', message: '更新失败：' + msg });
+    // commitUpdateState 已写日志，这里不重复；手动检查时弹通知，静默失败不打扰用户
+    if (updateManual) {
+      showUpdateNotification('检查更新失败', msg + '，可稍后重试');
+    }
+  });
+}
+
+function checkForUpdates(manual) {
+  updateManual = !!manual;
+  if (!app.isPackaged) {
+    commitUpdateState({ status: 'unsupported', message: '开发环境不支持在线更新' });
+    return Promise.resolve(updateState);
+  }
+  if (updateState.status === 'checking' || updateState.status === 'downloading') {
+    return Promise.resolve(updateState);
+  }
+  // 'error' 事件负责提示，这里吞掉 rejection 避免未捕获异常；统一返回内部状态
+  return autoUpdater.checkForUpdates()
+    .then(() => updateState)
+    .catch((err) => {
+      dbg('updater checkForUpdates rejected: ' + briefErr(err));
+      return updateState;
+    });
 }
 
 /* ================= 提醒通知 ================= */
@@ -380,13 +577,24 @@ ipcMain.on('panel:hover', () => {
 
 ipcMain.on('settings:open', createSettingsWindow);
 ipcMain.on('panel:hide', () => {
-  if (mainWindow) mainWindow.hide();
+  if (mainWindow) {
+    userHidden = true;
+    mainWindow.hide();
+  }
   data.settings.panelVisible = false;
   saveData();
   updateTrayMenu();
 });
 ipcMain.on('panel:toggle', togglePanel);
 ipcMain.on('app:quit', () => app.quit());
+
+/* 更新相关 IPC */
+ipcMain.handle('app:version', () => app.getVersion());
+ipcMain.handle('update:getState', () => updateState);
+ipcMain.handle('update:check', () => checkForUpdates(true));
+ipcMain.on('update:install', () => {
+  if (updateState.status === 'downloaded') autoUpdater.quitAndInstall();
+});
 
 /* ================= 应用生命周期 ================= */
 const gotLock = app.requestSingleInstanceLock();
@@ -410,12 +618,31 @@ if (!gotLock) {
     createMainWindow();
     createTray();
 
+    // 自动更新：注册事件并在启动 6 秒后静默检查一次（不弹任何提示，除非发现新版/出错只记日志）
+    initAutoUpdater();
+    setTimeout(() => checkForUpdates(false), 6000);
+
     // 每 20 秒检查一次到点提醒
     checkReminders();
     notifyTimer = setInterval(checkReminders, 20 * 1000);
 
     // 每 60ms 按光标位置兜底更新鼠标穿透状态（即时解除由 panel:hover 完成）
     setInterval(updateMouseIgnore, 60);
+
+    // 看门狗：面板应显示却不可见（被系统动作意外隐藏）时自动恢复。
+    // 注意：外部 SW_HIDE 不会触发 Electron 的 'hide' 事件（实测），只能靠轮询兜底，
+    // 250ms 间隔使"显示桌面"类隐藏最长仅闪约 1/4 秒。
+    setInterval(() => {
+      if (!mainWindow || mainWindow.isDestroyed()) return;
+      if (userHidden || data.settings.panelVisible === false) return;
+      if (!mainWindow.isVisible()) {
+        dbg('watchdog: panel invisible unexpectedly → show()');
+        mainWindow.show();
+      } else if (mainWindow.isMinimized()) {
+        dbg('watchdog: panel minimized unexpectedly → restore()');
+        mainWindow.restore();
+      }
+    }, 250);
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createMainWindow();

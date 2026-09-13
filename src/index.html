@@ -8,7 +8,24 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body class="panel-body">
+  <!-- 收起态覆盖摘要条 —— 在 panel 外面，不受 scale 影响 -->
+  <div class="collapsed-bar" id="collapsedBar" hidden>
+    <div class="cb-date">
+      <span id="cbMonthDay">--</span>
+      <span class="cb-week" id="cbWeek">--</span>
+    </div>
+    <div class="cb-info">
+      <span id="cbSummary">今日待办 0 项</span>
+      <span class="cb-next" id="cbNext"></span>
+    </div>
+    <div class="cb-actions">
+      <button class="icon-btn cb-btn" id="btnPin2" title="固定位置">📌</button>
+      <button class="icon-btn cb-btn" id="btnExpand" title="展开面板">▲</button>
+    </div>
+  </div>
+
   <div class="panel" id="panel">
+
     <!-- 顶部：日期 + 窗口操作（可拖动） -->
     <header class="panel-header drag">
       <div class="date-block">

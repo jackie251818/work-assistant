@@ -4,7 +4,7 @@
 
 ![平台](https://img.shields.io/badge/platform-Windows-0078D4)
 ![技术栈](https://img.shields.io/badge/Electron-33+-47848F)
-![版本](https://img.shields.io/badge/version-1.2.0-blue)
+![版本](https://img.shields.io/badge/version-1.3.0-blue)
 ![许可](https://img.shields.io/badge/license-MIT-green)
 ![下载](https://img.shields.io/github/v/release/jackie251818/work-assistant?display_name=tag&sort=semver)
 [![Release](https://img.shields.io/badge/⬇️_下载-Releases-0ea5e9)](https://github.com/jackie251818/work-assistant/releases/latest)
@@ -16,8 +16,10 @@
 - **每日待办面板** — 半透明悬浮在桌面，展示今日任务、完成进度和时间提醒
 - **多周期提醒** — 支持每天 / 每周 / 每月 / 单次 四种重复模式
 - **到点系统通知** — 每个任务可设置具体时间，到点弹出 Windows 系统通知
-- **一键收起为迷你长条** — 点 `—` 把整个面板缩成 340×34 的横向摘要条，只显示日期、待办统计和下一条任务；鼠标悬停自动弹出，空闲 N 秒自动收起（均可在设置中调整）
+- **一键收起为迷你长条** — 点 `—` 把整个面板缩成 340×34 的横向摘要条，只显示日期、待办统计和下一条任务；多条任务每 3 秒轮播；鼠标悬停自动弹出，空闲 N 秒自动收起（均可在设置中调整）
+- **自动更新** — 基于 electron-updater + GitHub Releases，启动后自动检查新版本并在后台下载，完成后点一下通知即可重启安装；也可在设置页或托盘菜单手动检查
 - **6 款内置皮肤** — 星云蓝 / 落日橙 / 森林翠 / 樱花粉 / 紫罗兰 / 水墨极简，设置页一键切换即时生效
+- **防意外消失** — Win+D / 显示桌面等系统动作导致面板被隐藏时，250ms 内自动恢复；用户主动隐藏不受影响
 - **位置锁定** — 一键固定面板位置，防止误触拖走
 - **智能鼠标穿透** — 光标离开面板时自动穿透，让面板外区域的桌面图标可以点击
 - **本地数据存储** — 所有任务和设置仅保存在本机 `%APPDATA%` 目录，不上传任何服务器
@@ -253,6 +255,14 @@ A：把旧电脑 `%APPDATA%\work-assistant\tasks.json` 拷到新电脑同路径�
 
 A：项目路径含中文时 electron-builder 的 NSIS 打包会失败（makensis 按 ANSI 解析参数）。解决方法：把整个项目物理复制到纯英文路径（如 `D:\dr-build\app`）再打包。
 
+**Q：自动更新是怎么工作的？检查失败怎么办？**
+
+A：应用启动后会从本仓库 GitHub Releases 拉取 `latest.yml` 判断是否有新版本（无需任何账号），发现新版自动后台下载，完成后通知你重启安装。更新包按 SHA-512 校验，且为当前用户级安装、不弹 UAC。若网络访问 GitHub 不畅导致检查失败，不会打扰使用，可稍后在设置页「关于与更新」手动重试，或直接到 [Releases](https://github.com/jackie251818/work-assistant/releases/latest) 下载安装包覆盖安装（任务数据不受影响）。注意 v1.2.0 及更早版本需要最后一次手动安装 v1.3.0，之后才能自动更新。
+
+**Q：发新版 Release 时要上传哪些文件？**
+
+A：三个文件缺一不可，且必须在同一个 Release 中：`work-assistant-setup-x.y.z.exe`、`latest.yml`、`work-assistant-setup-x.y.z.exe.blockmap`（electron-builder 打包产物，`latest.yml` 中的文件名必须与 Release 资产名完全一致）。
+
 ---
 
 ## 贡献
@@ -302,6 +312,14 @@ git push origin feat/your-feature-name
 ---
 
 ## 更新日志
+
+### v1.3.0 (2026-09-13)
+
+- **新增：软件自动更新** — 启动 6 秒后静默检查 GitHub Releases，发现新版自动后台下载（支持差分增量更新），下载完成弹出系统通知，点击即重启安装；设置页「关于与更新」可查看版本、手动检查、查看下载进度；托盘菜单同步提供入口
+- **修复：点桌面空白 / Win+D / 显示桌面后面板意外消失** — 三重防护：`minimize`/`hide` 事件即时恢复 + 250ms 看门狗兜底（实测外部 SW_HIDE 不触发 Electron 事件，只能靠看门狗，恢复耗时约 240ms）；用户主动隐藏（托盘菜单）不受影响
+- 新增：收起迷你长条支持多条任务每 3 秒轮播（`1/3 ⏰10:00 任务名`，带淡入动画）
+- 修复：tasks.json 带 UTF-8 BOM（如记事本保存）时数据被默认值覆盖的问题
+- 注意：v1.2.0 及更早版本不含更新模块，需最后一次手动安装 v1.3.0；此后版本均可自动更新
 
 ### v1.2.0 (2026-09-13)
 

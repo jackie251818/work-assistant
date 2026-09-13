@@ -162,7 +162,10 @@
     syncCollapseBtn();
     if (collapsed) {
       clearTimeout(collapseTimer);
+      rotateIdx = 0;
+      renderCollapsedBar(); // 收起时刷新摘要并启动多任务轮询
     } else {
+      stopRotate();
       scheduleAutoCollapse();
     }
   }
@@ -184,6 +187,13 @@
     }
   }
 
+  /* 收起态多任务轮询 */
+  let rotateIdx = 0;
+  let rotateTimer = null;
+  function stopRotate() {
+    clearInterval(rotateTimer);
+    rotateTimer = null;
+  }
   function renderCollapsedBar() {
     const date = new Date();
     const due = sortTasks(state.tasks, date);
@@ -191,12 +201,32 @@
     $('cbMonthDay').textContent = date.getDate();
     $('cbWeek').textContent = U.WEEK_NAMES[date.getDay()];
     $('cbSummary').textContent = `${due.length - doneCount}/${due.length} 项`;
-    // 下一条未完成任务
-    const next = due.find((t) => !U.isTaskDone(t, date));
-    if (next) {
-      $('cbNext').textContent = (next.time ? '⏰' + next.time + ' ' : '') + next.title;
+    // 未完成任务列表：收起态每 3 秒轮询展示下一条
+    const pending = due.filter((t) => !U.isTaskDone(t, date));
+    const nextEl = $('cbNext');
+    if (pending.length === 0) {
+      stopRotate();
+      nextEl.textContent = due.length ? '今日已全部完成 ✓' : '暂无安排';
     } else {
-      $('cbNext').textContent = due.length ? '今日已全部完成 ✓' : '暂无安排';
+      if (rotateIdx >= pending.length) rotateIdx = 0;
+      const cur = pending[rotateIdx];
+      const prefix = pending.length > 1 ? `${rotateIdx + 1}/${pending.length} ` : '';
+      nextEl.textContent =
+        prefix + (cur.time ? '⏰' + cur.time + ' ' : '') + cur.title;
+      if (pending.length > 1) {
+        nextEl.classList.remove('cb-flip');
+        void nextEl.offsetWidth; // 强制重排以重启动画
+        nextEl.classList.add('cb-flip');
+      } else {
+        nextEl.classList.remove('cb-flip');
+      }
+      if (pending.length > 1 && isCollapsed && !rotateTimer) {
+        rotateTimer = setInterval(() => {
+          rotateIdx = (rotateIdx + 1) % pending.length;
+          renderCollapsedBar();
+        }, 3000);
+      }
+      if (pending.length <= 1) stopRotate();
     }
     $('btnPin2').classList.toggle('off', state.settings.pinned === false);
   }

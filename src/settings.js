@@ -276,6 +276,37 @@
       : '关闭后仅展示，不弹系统通知';
   }
 
+  /* ================= 自动更新 ================= */
+  function renderUpdateState(s) {
+    if (!s) return;
+    $('updateMsg').textContent = s.message || '启动后自动检查更新；发现新版会在后台下载，完成后提示你重启安装';
+    $('updateMsg').classList.toggle('update-error', s.status === 'error');
+
+    const busy = s.status === 'checking' || s.status === 'downloading' || s.status === 'available';
+    $('btnCheckUpdate').textContent =
+      s.status === 'checking' ? '正在检查…' :
+      s.status === 'downloading' ? '下载中 ' + (s.percent || 0) + '%' : '检查更新';
+    $('btnCheckUpdate').disabled = busy;
+
+    const downloading = s.status === 'downloading' || s.status === 'available';
+    $('updateProgress').hidden = !downloading;
+    $('updateProgressBar').style.width = (s.percent || 0) + '%';
+
+    $('btnInstallUpdate').hidden = s.status !== 'downloaded';
+  }
+
+  $('btnCheckUpdate').addEventListener('click', async () => {
+    $('btnCheckUpdate').disabled = true;
+    $('updateMsg').textContent = '正在检查更新…';
+    $('updateMsg').classList.remove('update-error');
+    const s = await window.api.checkUpdate();
+    renderUpdateState(s);
+  });
+  $('btnInstallUpdate').addEventListener('click', () => {
+    window.api.installUpdate();
+  });
+  window.api.onUpdateStatus(renderUpdateState);
+
   $('btnAdd').addEventListener('click', () => openForm('new'));
   $('btnCancel').addEventListener('click', closeForm);
   $('fRepeat').addEventListener('change', syncRepeatFields);
@@ -357,5 +388,8 @@
     state = await window.api.getData();
     renderPrefs();
     renderTaskCards();
+
+    $('appVersion').textContent = 'v' + await window.api.getVersion();
+    renderUpdateState(await window.api.getUpdateState());
   })();
 })();
