@@ -11,6 +11,8 @@ contextBridge.exposeInMainWorld('api', {
   openSettings: () => ipcRenderer.send('settings:open'),
   /** 隐藏悬浮面板 */
   hidePanel: () => ipcRenderer.send('panel:hide'),
+  /** 最小化到任务栏（任务栏图标点击恢复） */
+  minimizePanel: () => ipcRenderer.send('panel:minimize'),
   /** 固定/取消固定面板（位置锁定） */
   setPinned: (pinned) => ipcRenderer.invoke('panel:pin', pinned),
   /** 收起/展开面板 */

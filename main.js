@@ -72,6 +72,7 @@ const DEFAULT_DATA = () => ({
     notify: true,
     panelVisible: true,
     pinned: true,
+    alwaysOnTop: true,
     theme: 'nebula',
     bounds: null,
     autoCollapse: true,
@@ -112,6 +113,9 @@ let notifyTimer = null;
 // 用户是否主动要求隐藏面板（托盘菜单 / panel:hide）。
 // 用于区分系统动作（Win+D、显示桌面）导致的意外隐藏，后者需自动恢复。
 let userHidden = false;
+// 用户是否主动最小化到任务栏（点 — 按钮）。
+// 非用户主动的最小化（系统动作）仍会被立即还原。
+let userMinimized = false;
 const notifiedKeys = new Set();
 
 const ASSET = (name) => path.join(__dirname, 'assets', name);
@@ -121,6 +125,12 @@ function applyPinState() {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   const pinned = data.settings.pinned !== false;
   mainWindow.setMovable(!pinned);
+}
+
+/** 窗口置顶状态 —— 面板保持在其他普通窗口上方（设置 → 偏好设置可开关） */
+function applyAlwaysOnTop() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  mainWindow.setAlwaysOnTop(data.settings.alwaysOnTop !== false);
 }
 
 /* ================= 面板收起/展开 ================= */
@@ -176,7 +186,7 @@ function createMainWindow() {
     transparent: true,
     resizable: false,
     maximizable: false,
-    minimizable: false,
+    minimizable: true,
     fullscreenable: false,
     skipTaskbar: true,
     hasShadow: false,
@@ -188,8 +198,9 @@ function createMainWindow() {
     }
   });
 
-  // 应用固定（位置锁定）状态
+  // 应用固定（位置锁定）与置顶状态
   applyPinState();
+  applyAlwaysOnTop();
   mainWindow.loadFile(path.join(__dirname, 'src', 'index.html'));
 
   mainWindow.once('ready-to-show', () => {
@@ -209,12 +220,20 @@ function createMainWindow() {
   mainWindow.on('move', persistBounds);
 
   // —— 防止面板被系统动作（Win+D / 显示桌面 / 误触托盘）意外藏起来 ——
-  mainWindow.on('minimize', (e) => {
-    dbg('event: minimize (userHidden=' + userHidden + ')');
-    // 面板设计上不允许最小化，直接还原
-    if (mainWindow && !mainWindow.isDestroyed()) {
+  mainWindow.on('minimize', () => {
+    dbg('event: minimize (userMinimized=' + userMinimized + ')');
+    // 非用户主动最小化（系统动作）→ 立即还原；用户点 — 最小化到任务栏则保留
+    if (!userMinimized && mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.restore();
+    } else {
+      updateTrayMenu();
     }
+  });
+  mainWindow.on('restore', () => {
+    dbg('event: restore');
+    userMinimized = false;
+    // 恢复后回归"托盘常驻、不占任务栏"的常态
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.setSkipTaskbar(true);
   });
   mainWindow.on('hide', () => {
     dbg('event: hide (userHidden=' + userHidden + ') visible=' +
@@ -226,6 +245,7 @@ function createMainWindow() {
             data.settings.panelVisible !== false) {
           dbg('auto-recover: show after unexpected hide');
           mainWindow.show();
+          if (mainWindow.isMinimized()) mainWindow.restore();
         }
       });
     }
@@ -269,9 +289,24 @@ function createSettingsWindow() {
   });
 }
 
+/** 从任务栏/托盘恢复最小化的面板 */
+function restorePanelFromTaskbar() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  dbg('restorePanelFromTaskbar');
+  userMinimized = false;
+  mainWindow.restore();
+  mainWindow.setSkipTaskbar(true);
+  mainWindow.setIgnoreMouseEvents(false);
+  updateTrayMenu();
+}
+
 function togglePanel() {
   if (!mainWindow) return;
   dbg('togglePanel called, visible=' + mainWindow.isVisible());
+  if (mainWindow.isMinimized()) {
+    restorePanelFromTaskbar();
+    return;
+  }
   if (mainWindow.isVisible()) {
     userHidden = true;
     mainWindow.hide();
@@ -289,7 +324,9 @@ function togglePanel() {
 /* ================= 系统托盘 ================= */
 function updateTrayMenu() {
   if (!tray) return;
-  const visible = mainWindow ? mainWindow.isVisible() : true;
+  const visible = mainWindow
+    ? (mainWindow.isVisible() && !mainWindow.isMinimized())
+    : true;
   const menu = Menu.buildFromTemplate([
     { label: visible ? '隐藏面板' : '显示面板', click: togglePanel },
     { label: '设置...', click: createSettingsWindow },
@@ -498,6 +535,7 @@ function checkReminders() {
       });
       n.on('click', () => {
         if (!mainWindow) createMainWindow();
+        else if (mainWindow.isMinimized()) restorePanelFromTaskbar();
         else mainWindow.show();
       });
       n.show();
@@ -518,6 +556,9 @@ ipcMain.handle('data:save', (_e, payload) => {
   if (payload && Array.isArray(payload.tasks)) data.tasks = payload.tasks;
   if (payload && payload.settings) data.settings = Object.assign(data.settings, payload.settings);
   saveData();
+  if (payload && payload.settings && 'alwaysOnTop' in payload.settings) {
+    applyAlwaysOnTop();
+  }
   broadcastDataChange();
   return data;
 });
@@ -585,6 +626,15 @@ ipcMain.on('panel:hide', () => {
   saveData();
   updateTrayMenu();
 });
+ipcMain.on('panel:minimize', () => {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  dbg('panel:minimize (user)');
+  userMinimized = true;
+  // 最小化期间在任务栏显示图标，点击图标即可恢复
+  mainWindow.setSkipTaskbar(false);
+  mainWindow.minimize();
+  updateTrayMenu();
+});
 ipcMain.on('panel:toggle', togglePanel);
 ipcMain.on('app:quit', () => app.quit());
 
@@ -603,7 +653,8 @@ if (!gotLock) {
 } else {
   app.on('second-instance', () => {
     if (mainWindow) {
-      if (!mainWindow.isVisible()) mainWindow.show();
+      if (mainWindow.isMinimized()) restorePanelFromTaskbar();
+      else if (!mainWindow.isVisible()) mainWindow.show();
       mainWindow.focus();
     }
   });
@@ -634,7 +685,7 @@ if (!gotLock) {
     // 250ms 间隔使"显示桌面"类隐藏最长仅闪约 1/4 秒。
     setInterval(() => {
       if (!mainWindow || mainWindow.isDestroyed()) return;
-      if (userHidden || data.settings.panelVisible === false) return;
+      if (userHidden || userMinimized || data.settings.panelVisible === false) return;
       if (!mainWindow.isVisible()) {
         dbg('watchdog: panel invisible unexpectedly → show()');
         mainWindow.show();

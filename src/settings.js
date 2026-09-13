@@ -63,6 +63,7 @@
     $('opacityVal').textContent = pct + '%';
     $('swAutoStart').classList.toggle('on', !!s.autoStart);
     $('swNotify').classList.toggle('on', s.notify !== false);
+    $('swAlwaysOnTop').classList.toggle('on', s.alwaysOnTop !== false);
     $('swAutoCollapse').classList.toggle('on', s.autoCollapse !== false);
     $('collapseDelay').value = s.collapseDelay ?? 8;
     applyTheme();
@@ -167,6 +168,12 @@
 
   $('swNotify').addEventListener('click', async () => {
     state.settings.notify = state.settings.notify === false;
+    state = await window.api.saveData({ settings: state.settings });
+    renderPrefs();
+  });
+
+  $('swAlwaysOnTop').addEventListener('click', async () => {
+    state.settings.alwaysOnTop = state.settings.alwaysOnTop === false;
     state = await window.api.saveData({ settings: state.settings });
     renderPrefs();
   });
