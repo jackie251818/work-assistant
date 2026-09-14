@@ -285,8 +285,9 @@ textarea {
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
   border-radius: 18px;
+  /* 阴影收缩到 10px 窗口边距内，避免被窗口边缘裁切出硬边印记 */
   box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.45),
+    0 2px 6px rgba(0, 0, 0, 0.4),
     0 0 0 1px rgba(0, 0, 0, 0.25),
     inset 0 1px 0 rgba(160, 210, 255, 0.08);
   display: flex;
@@ -375,6 +376,61 @@ textarea {
 /* 进度条 */
 .progress-wrap {
   padding: 12px 16px 4px;
+}
+
+/* ---------- 待办 / 记事本 视图容器 ---------- */
+.task-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.notes-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 10px 14px 6px;
+}
+/* display:flex 容器必须显式支持 hidden 属性 */
+.task-view[hidden],
+.notes-view[hidden] {
+  display: none;
+}
+.notes-view textarea {
+  flex: 1;
+  min-height: 0;
+  background: rgba(120, 170, 230, 0.05);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 13px;
+  line-height: 1.65;
+  resize: none;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.notes-view textarea:focus {
+  border-color: rgba(var(--accent-rgb), 0.5);
+  background: rgba(120, 170, 230, 0.08);
+}
+.notes-view textarea::placeholder {
+  color: var(--text-dim);
+  opacity: 0.7;
+}
+.notes-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-dim);
+  padding: 6px 4px 0;
+}
+.icon-btn.active {
+  color: var(--accent);
+  border-color: rgba(var(--accent-rgb), 0.5);
+  background: rgba(var(--accent-rgb), 0.12);
 }
 
 .progress-info {

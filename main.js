@@ -66,6 +66,7 @@ const DEFAULT_DATA = () => ({
       done: {}
     }
   ],
+  notes: '',
   settings: {
     opacity: 0.92,
     autoStart: false,
@@ -90,6 +91,7 @@ function loadData() {
     const d = DEFAULT_DATA();
     return {
       tasks: Array.isArray(parsed.tasks) ? parsed.tasks : d.tasks,
+      notes: typeof parsed.notes === 'string' ? parsed.notes : '',
       settings: Object.assign(d.settings, parsed.settings || {})
     };
   } catch {
@@ -184,6 +186,7 @@ function createMainWindow() {
     y,
     frame: false,
     transparent: true,
+    thickFrame: false, // 去掉 Windows 为无边框窗口保留的 1px 系统边框印记
     resizable: false,
     maximizable: false,
     minimizable: true,
@@ -555,6 +558,7 @@ ipcMain.handle('data:get', () => data);
 ipcMain.handle('data:save', (_e, payload) => {
   if (payload && Array.isArray(payload.tasks)) data.tasks = payload.tasks;
   if (payload && payload.settings) data.settings = Object.assign(data.settings, payload.settings);
+  if (payload && typeof payload.notes === 'string') data.notes = payload.notes;
   saveData();
   if (payload && payload.settings && 'alwaysOnTop' in payload.settings) {
     applyAlwaysOnTop();

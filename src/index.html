@@ -40,29 +40,42 @@
       </div>
       <div class="header-actions no-drag">
         <button class="icon-btn" id="btnPin" title="固定位置（不可拖动）">📌</button>
+        <button class="icon-btn" id="btnNotes" title="记事本">📝</button>
         <button class="icon-btn" id="btnSettings" title="设置待办事项">⚙</button>
         <button class="icon-btn" id="btnMinimize" title="最小化到任务栏（点任务栏图标恢复）">—</button>
         <button class="icon-btn" id="btnHide" title="收起面板">▲</button>
       </div>
     </header>
 
-    <!-- 进度概览 -->
-    <div class="progress-wrap">
-      <div class="progress-info">
-        <span id="progressText">今日待办 0 项</span>
-        <span id="progressPercent"></span>
+    <!-- 待办视图 -->
+    <div class="task-view" id="taskView">
+      <!-- 进度概览 -->
+      <div class="progress-wrap">
+        <div class="progress-info">
+          <span id="progressText">今日待办 0 项</span>
+          <span id="progressPercent"></span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
       </div>
-      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+      <!-- 今日任务列表 -->
+      <main class="task-list" id="taskList"></main>
+
+      <!-- 空状态 -->
+      <div class="empty-state" id="emptyState" hidden>
+        <div class="empty-icon">✓</div>
+        <div class="empty-title">今日暂无安排</div>
+        <div class="empty-sub">点击右上角 ⚙ 添加每日待办</div>
+      </div>
     </div>
 
-    <!-- 今日任务列表 -->
-    <main class="task-list" id="taskList"></main>
-
-    <!-- 空状态 -->
-    <div class="empty-state" id="emptyState" hidden>
-      <div class="empty-icon">✓</div>
-      <div class="empty-title">今日暂无安排</div>
-      <div class="empty-sub">点击右上角 ⚙ 添加每日待办</div>
+    <!-- 记事本视图 -->
+    <div class="notes-view" id="notesView" hidden>
+      <textarea id="notesArea" placeholder="随手记点什么…" spellcheck="false"></textarea>
+      <div class="notes-meta">
+        <span id="notesCount">0 字</span>
+        <span>自动保存</span>
+      </div>
     </div>
 
     <footer class="panel-footer" id="panelFooter"></footer>

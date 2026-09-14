@@ -251,7 +251,42 @@
     renderCollapsedBar();
     syncPinBtn();
     syncCollapseBtn();
+    syncNotes();
   }
+
+  /* ---------- 记事本视图 ---------- */
+  const notesEl = $('notesArea');
+  let notesTimer = null;
+  let currentView = 'tasks';
+
+  function switchView(view) {
+    currentView = view;
+    const notesMode = view === 'notes';
+    $('notesView').hidden = !notesMode;
+    $('taskView').hidden = notesMode;
+    $('btnNotes').classList.toggle('active', notesMode);
+    $('btnNotes').title = notesMode ? '返回待办' : '记事本';
+    if (notesMode) notesEl.focus();
+  }
+
+  function syncNotes() {
+    // 外部数据变更时同步文本（正在输入则不打断）
+    if (document.activeElement !== notesEl && notesEl.value !== (state.notes || '')) {
+      notesEl.value = state.notes || '';
+    }
+    $('notesCount').textContent = (state.notes || '').length + ' 字';
+  }
+
+  notesEl.addEventListener('input', () => {
+    $('notesCount').textContent = notesEl.value.length + ' 字';
+    clearTimeout(notesTimer);
+    notesTimer = setTimeout(async () => {
+      state = await window.api.saveData({ notes: notesEl.value });
+    }, 500);
+  });
+  $('btnNotes').addEventListener('click', () => {
+    switchView(currentView === 'notes' ? 'tasks' : 'notes');
+  });
 
   /* ---------- 事件 ---------- */
   listEl.addEventListener('click', async (e) => {

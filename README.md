@@ -4,7 +4,7 @@
 
 ![平台](https://img.shields.io/badge/platform-Windows-0078D4)
 ![技术栈](https://img.shields.io/badge/Electron-33+-47848F)
-![版本](https://img.shields.io/badge/version-1.4.0-blue)
+![版本](https://img.shields.io/badge/version-1.5.0-blue)
 ![许可](https://img.shields.io/badge/license-MIT-green)
 ![下载](https://img.shields.io/github/v/release/jackie251818/work-assistant?display_name=tag&sort=semver)
 [![Release](https://img.shields.io/badge/⬇️_下载-Releases-0ea5e9)](https://github.com/jackie251818/work-assistant/releases/latest)
@@ -23,6 +23,7 @@
 - **位置锁定** — 一键固定面板位置，防止误触拖走
 - **窗口置顶** — 面板始终保持在其他窗口上方不被遮挡，设置 → 偏好设置中可开关（默认开启）；展开态下面板空白处**右键**也可快速切换
 - **最小化到任务栏** — 点 `—` 把面板最小化到任务栏，点任务栏图标即可还原；系统误触发的最小化仍会被自动还原
+- **记事本** — 点头部「📝」切换到记事本视图，随手记录自动保存，再点一次返回待办
 - **智能鼠标穿透** — 光标离开面板时自动穿透，让面板外区域的桌面图标可以点击
 - **本地数据存储** — 所有任务和设置仅保存在本机 `%APPDATA%` 目录，不上传任何服务器
 - **开机自启** — 可选择随 Windows 开机自动启动
@@ -343,6 +344,11 @@ git push origin feat/your-feature-name
 ---
 
 ## 更新日志
+
+### v1.5.0 (2026-09-14)
+
+- **新增：记事本模块** — 面板头部新增「📝」按钮，点击切换到记事本视图，随手记录文字自动保存（输入 0.5 秒后落盘），再次点击返回待办；支持字数统计，内容跟随主题配色
+- 修复：面板边缘出现轻微边框印记 — 去掉 Windows 为无边框窗口保留的 1px 系统边框（`thickFrame: false`），面板阴影收缩到窗口边距内不再被裁切出硬边
 
 ### v1.4.0 (2026-09-13)
 
