@@ -162,6 +162,7 @@
     syncCollapseBtn();
     if (collapsed) {
       clearTimeout(collapseTimer);
+      hideCtxMenu();
       rotateIdx = 0;
       renderCollapsedBar(); // 收起时刷新摘要并启动多任务轮询
     } else {
@@ -276,6 +277,48 @@
     syncPinBtn();
     syncCollapseBtn();
   });
+
+  /* ---------- 展开态右键菜单 ---------- */
+  const ctxMenu = $('ctxMenu');
+
+  function showCtxMenu(x, y) {
+    // 勾选状态与当前置顶设置同步
+    $('ctxAotCheck').style.visibility =
+      state.settings.alwaysOnTop !== false ? 'visible' : 'hidden';
+    ctxMenu.hidden = false;
+    // 先显示再量尺寸，限制在窗口边界内（窗口仅 320px 宽且四周透明）
+    const rect = ctxMenu.getBoundingClientRect();
+    const left = Math.max(4, Math.min(x, window.innerWidth - rect.width - 4));
+    const top = Math.max(4, Math.min(y, window.innerHeight - rect.height - 4));
+    ctxMenu.style.left = left + 'px';
+    ctxMenu.style.top = top + 'px';
+  }
+  function hideCtxMenu() {
+    if (ctxMenu) ctxMenu.hidden = true;
+  }
+
+  // 监听 #panel：收起态 panel 为 display:none，右键不会触发，天然仅展开态生效
+  $('panel').addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    showCtxMenu(e.clientX, e.clientY);
+  });
+  ctxMenu.addEventListener('contextmenu', (e) => e.preventDefault());
+  ctxMenu.addEventListener('pointerdown', (e) => e.stopPropagation());
+  $('ctxAlwaysOnTop').addEventListener('click', async () => {
+    state.settings.alwaysOnTop = state.settings.alwaysOnTop === false;
+    state = await window.api.saveData({ settings: state.settings });
+    hideCtxMenu();
+  });
+  // 左键点菜单外关闭（捕获阶段，避免右键事件序列误关）
+  document.addEventListener('pointerdown', (e) => {
+    if (!ctxMenu.hidden && e.button === 0 && !ctxMenu.contains(e.target)) {
+      hideCtxMenu();
+    }
+  }, true);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') hideCtxMenu();
+  });
+  window.addEventListener('blur', hideCtxMenu);
 
   /* 光标移动：收起态 → 悬停自动展开；展开态 → 重置空闲自动收起计时器 */
   window.addEventListener('mousemove', () => {
