@@ -7,6 +7,8 @@ contextBridge.exposeInMainWorld('api', {
   saveData: (payload) => ipcRenderer.invoke('data:save', payload),
   /** 切换某日任务完成状态 */
   toggleTask: (id, done) => ipcRenderer.invoke('task:toggle', id, done),
+  /** 单条提醒置顶/取消置顶 */
+  pinTask: (id, pinned) => ipcRenderer.invoke('task:pin', id, pinned),
   /** 打开设置窗口 */
   openSettings: () => ipcRenderer.send('settings:open'),
   /** 隐藏悬浮面板 */

@@ -578,6 +578,17 @@ ipcMain.handle('task:toggle', (_e, id, done) => {
   return data;
 });
 
+// 单条提醒置顶/取消置顶（置顶后该任务在面板列表中排最前）
+ipcMain.handle('task:pin', (_e, id, pinned) => {
+  const task = data.tasks.find((t) => t.id === id);
+  if (task) {
+    task.pinned = !!pinned;
+    saveData();
+    broadcastDataChange();
+  }
+  return data;
+});
+
 ipcMain.handle('panel:pin', (_e, pinned) => {
   data.settings.pinned = !!pinned;
   saveData();

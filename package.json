@@ -1,6 +1,6 @@
 {
   "name": "work-assistant",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Windows 工作助手 - 半透明每日待办悬浮面板",
   "main": "main.js",
   "scripts": {

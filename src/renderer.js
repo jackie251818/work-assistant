@@ -15,6 +15,7 @@
   function scheduleAutoCollapse() {
     clearTimeout(collapseTimer);
     if (!collapseEnabled()) return;
+    if (currentView === 'notes') return; // 记事本视图下不自动收起，避免打断编辑
     const delay = (state.settings.collapseDelay ?? 8) * 1000;
     collapseTimer = setTimeout(() => setPanelCollapsed(true), delay);
   }
@@ -63,9 +64,14 @@
     return list
       .filter((t) => U.isTaskDue(t, date))
       .sort((a, b) => {
+        // 已完成的统一沉底（置顶任务完成当天也沉底，次日自动回到最前）
         const doneA = U.isTaskDone(a, date) ? 1 : 0;
         const doneB = U.isTaskDone(b, date) ? 1 : 0;
         if (doneA !== doneB) return doneA - doneB;
+        // 未完成任务中：置顶的排最前，多条置顶时仍按提醒时间排序
+        const pinA = a.pinned === true ? 0 : 1;
+        const pinB = b.pinned === true ? 0 : 1;
+        if (pinA !== pinB) return pinA - pinB;
         return (a.time || '99:99').localeCompare(b.time || '99:99');
       });
   }
@@ -123,8 +129,17 @@
         check.className = 'task-check';
         check.title = done ? '标记为未完成' : '标记为已完成';
 
+        // 单条置顶按钮：置顶后该提醒始终排在列表最前面
+        const pin = document.createElement('button');
+        pin.className = 'task-pin' + (task.pinned === true ? ' on' : '');
+        pin.title = task.pinned === true
+          ? '取消置顶（恢复按时间排序）'
+          : '置顶：把这条提醒移到列表最前面';
+        pin.textContent = '📌';
+
         item.appendChild(check);
         item.appendChild(body);
+        item.appendChild(pin);
         listEl.appendChild(item);
       }
     }
@@ -162,7 +177,6 @@
     syncCollapseBtn();
     if (collapsed) {
       clearTimeout(collapseTimer);
-      hideCtxMenu();
       rotateIdx = 0;
       renderCollapsedBar(); // 收起时刷新摘要并启动多任务轮询
     } else {
@@ -266,7 +280,12 @@
     $('taskView').hidden = notesMode;
     $('btnNotes').classList.toggle('active', notesMode);
     $('btnNotes').title = notesMode ? '返回待办' : '记事本';
-    if (notesMode) notesEl.focus();
+    if (notesMode) {
+      notesEl.focus();
+      clearTimeout(collapseTimer); // 进入记事本：取消自动收起，避免编辑中被收起
+    } else if (!isCollapsed) {
+      scheduleAutoCollapse(); // 切回待办：恢复自动收起
+    }
   }
 
   function syncNotes() {
@@ -290,6 +309,16 @@
 
   /* ---------- 事件 ---------- */
   listEl.addEventListener('click', async (e) => {
+    // 单条置顶 / 取消置顶
+    const pinBtn = e.target.closest('.task-pin');
+    if (pinBtn) {
+      const item = pinBtn.closest('.task-item');
+      const willPin = !pinBtn.classList.contains('on');
+      state = await window.api.pinTask(item.dataset.id, willPin);
+      renderTasks();
+      renderCollapsedBar();
+      return;
+    }
     const check = e.target.closest('.task-check');
     if (!check) return;
     const item = check.closest('.task-item');
@@ -312,48 +341,6 @@
     syncPinBtn();
     syncCollapseBtn();
   });
-
-  /* ---------- 展开态右键菜单 ---------- */
-  const ctxMenu = $('ctxMenu');
-
-  function showCtxMenu(x, y) {
-    // 勾选状态与当前置顶设置同步
-    $('ctxAotCheck').style.visibility =
-      state.settings.alwaysOnTop !== false ? 'visible' : 'hidden';
-    ctxMenu.hidden = false;
-    // 先显示再量尺寸，限制在窗口边界内（窗口仅 320px 宽且四周透明）
-    const rect = ctxMenu.getBoundingClientRect();
-    const left = Math.max(4, Math.min(x, window.innerWidth - rect.width - 4));
-    const top = Math.max(4, Math.min(y, window.innerHeight - rect.height - 4));
-    ctxMenu.style.left = left + 'px';
-    ctxMenu.style.top = top + 'px';
-  }
-  function hideCtxMenu() {
-    if (ctxMenu) ctxMenu.hidden = true;
-  }
-
-  // 监听 #panel：收起态 panel 为 display:none，右键不会触发，天然仅展开态生效
-  $('panel').addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-    showCtxMenu(e.clientX, e.clientY);
-  });
-  ctxMenu.addEventListener('contextmenu', (e) => e.preventDefault());
-  ctxMenu.addEventListener('pointerdown', (e) => e.stopPropagation());
-  $('ctxAlwaysOnTop').addEventListener('click', async () => {
-    state.settings.alwaysOnTop = state.settings.alwaysOnTop === false;
-    state = await window.api.saveData({ settings: state.settings });
-    hideCtxMenu();
-  });
-  // 左键点菜单外关闭（捕获阶段，避免右键事件序列误关）
-  document.addEventListener('pointerdown', (e) => {
-    if (!ctxMenu.hidden && e.button === 0 && !ctxMenu.contains(e.target)) {
-      hideCtxMenu();
-    }
-  }, true);
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') hideCtxMenu();
-  });
-  window.addEventListener('blur', hideCtxMenu);
 
   /* 光标移动：收起态 → 悬停自动展开；展开态 → 重置空闲自动收起计时器 */
   window.addEventListener('mousemove', () => {

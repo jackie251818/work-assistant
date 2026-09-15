@@ -82,10 +82,14 @@
       return;
     }
 
-    // 启用在前，再按创建顺序
+    // 启用在前、置顶在前，再按创建顺序
     const sorted = state.tasks
       .slice()
-      .sort((a, b) => Number(a.enabled === false) - Number(b.enabled === false));
+      .sort(
+        (a, b) =>
+          Number(a.enabled === false) - Number(b.enabled === false) ||
+          Number(a.pinned !== true) - Number(b.pinned !== true)
+      );
 
     for (const task of sorted) {
       const card = document.createElement('div');
@@ -128,6 +132,14 @@
       sw.title = task.enabled !== false ? '点击停用' : '点击启用';
       sw.addEventListener('click', () => toggleEnabled(task.id));
 
+      const btnPin = document.createElement('button');
+      btnPin.className = 'op-btn' + (task.pinned === true ? ' on' : '');
+      btnPin.textContent = '📌 置顶';
+      btnPin.title = task.pinned === true
+        ? '取消置顶（悬浮面板中恢复按时间排序）'
+        : '在悬浮面板中把这条提醒置顶到最前面';
+      btnPin.addEventListener('click', () => togglePinned(task.id));
+
       const btnEdit = document.createElement('button');
       btnEdit.className = 'op-btn';
       btnEdit.textContent = '编辑';
@@ -139,6 +151,7 @@
       btnDel.addEventListener('click', () => removeTask(task.id));
 
       ops.appendChild(sw);
+      ops.appendChild(btnPin);
       ops.appendChild(btnEdit);
       ops.appendChild(btnDel);
 
@@ -197,6 +210,14 @@
   });
 
   /* ================= 任务增删改 ================= */
+  async function togglePinned(id) {
+    const task = state.tasks.find((t) => t.id === id);
+    if (!task) return;
+    task.pinned = task.pinned !== true;
+    state = await window.api.saveData({ tasks: state.tasks });
+    renderTaskCards();
+  }
+
   async function toggleEnabled(id) {
     const task = state.tasks.find((t) => t.id === id);
     if (!task) return;
