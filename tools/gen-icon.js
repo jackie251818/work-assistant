@@ -82,6 +82,32 @@ function encodeICO(sizes, pngs) {
   return Buffer.concat([header, ...entries, ...pngs]);
 }
 
+/** macOS ICNS：把多个尺寸的 PNG 打包（icp4~icp9 + ic10） */
+function encodeICNS(sizes, pngs) {
+  const typeMap = {
+    16: 'icp4', 32: 'icp5', 64: 'icp6', 128: 'icp7',
+    256: 'icp8', 512: 'icp9', 1024: 'ic10'
+  };
+  const entries = [];
+  let totalSize = 8; // 'icns' + 文件大小
+  sizes.forEach((s, i) => {
+    const type = typeMap[s];
+    if (!type) return;
+    const data = pngs[i];
+    const entrySize = 8 + data.length;
+    const entry = Buffer.alloc(entrySize);
+    entry.write(type, 0, 'ascii');
+    entry.writeUInt32BE(entrySize, 4);
+    data.copy(entry, 8);
+    entries.push(entry);
+    totalSize += entrySize;
+  });
+  const header = Buffer.alloc(8);
+  header.write('icns', 0, 'ascii');
+  header.writeUInt32BE(totalSize, 4);
+  return Buffer.concat([header, ...entries]);
+}
+
 /* ---------------- 画布 ---------------- */
 class Canvas {
   constructor(size) {
@@ -270,4 +296,15 @@ const icoPngs = icoSizes.map((s) => {
 });
 fs.writeFileSync(path.join(assetsDir, 'icon.ico'), encodeICO(icoSizes, icoPngs));
 
-console.log('图标已生成: assets/icon.png, assets/tray.png, assets/icon.ico (' + icoSizes.join('/') + ')');
+// ICNS：macOS 应用图标（16~512，小尺寸用简洁对勾，大尺寸用完整日历）
+const icnsSizes = [16, 32, 64, 128, 256, 512];
+const icnsPngs = icnsSizes.map((s) => {
+  const src = s <= 48 ? simpleCanvas : fullCanvas;
+  return encodePNG(s, s, src.downscale(s));
+});
+fs.writeFileSync(path.join(assetsDir, 'icon.icns'), encodeICNS(icnsSizes, icnsPngs));
+
+console.log(
+  '图标已生成: icon.png, tray.png, icon.ico (' + icoSizes.join('/') +
+  '), icon.icns (' + icnsSizes.join('/') + ')'
+);

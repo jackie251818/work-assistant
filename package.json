@@ -6,6 +6,7 @@
   "scripts": {
     "start": "electron .",
     "dist": "electron-builder --win --publish never",
+    "dist:mac": "electron-builder --mac --publish never",
     "gen-icon": "node tools/gen-icon.js"
   },
   "author": "",
@@ -38,6 +39,16 @@
       "shortcutName": "工作助手",
       "language": "2052",
       "artifactName": "work-assistant-setup-${version}.${ext}"
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "assets/icon.icns",
+      "category": "public.app-category.productivity",
+      "identity": null,
+      "artifactName": "work-assistant-${version}-mac.${ext}"
     },
     "publish": [
       {

@@ -13,6 +13,10 @@ const fs = require('fs');
 const U = require('./src/shared/reminder-utils');
 const { autoUpdater } = require('electron-updater');
 
+/* ================= 平台常量 ================= */
+const IS_WIN = process.platform === 'win32';
+const IS_MAC = process.platform === 'darwin';
+
 /* ================= 应用标识与数据目录 ================= */
 // 项目由"桌面提示"更名为"工作助手"，沿用旧数据（自动迁移 tasks.json）
 const DATA_DIR = path.join(app.getPath('appData'), 'work-assistant');
@@ -186,7 +190,7 @@ function createMainWindow() {
     y,
     frame: false,
     transparent: true,
-    thickFrame: false, // 去掉 Windows 为无边框窗口保留的 1px 系统边框印记
+    ...(IS_WIN ? { thickFrame: false } : {}), // Windows：去掉无边框窗口的 1px 系统边框印记
     resizable: false,
     maximizable: false,
     minimizable: true,
@@ -223,11 +227,16 @@ function createMainWindow() {
   mainWindow.on('move', persistBounds);
 
   // —— 防止面板被系统动作（Win+D / 显示桌面 / 误触托盘）意外藏起来 ——
+  // 仅 Windows 需要：Mac 无"显示桌面"隐藏分层窗口的问题
   mainWindow.on('minimize', () => {
     dbg('event: minimize (userMinimized=' + userMinimized + ')');
-    // 非用户主动最小化（系统动作）→ 立即还原；用户点 — 最小化到任务栏则保留
-    if (!userMinimized && mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.restore();
+    if (IS_WIN) {
+      // 非用户主动最小化（系统动作）→ 立即还原；用户点 — 最小化到任务栏则保留
+      if (!userMinimized && mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.restore();
+      } else {
+        updateTrayMenu();
+      }
     } else {
       updateTrayMenu();
     }
@@ -241,16 +250,18 @@ function createMainWindow() {
   mainWindow.on('hide', () => {
     dbg('event: hide (userHidden=' + userHidden + ') visible=' +
       (mainWindow && !mainWindow.isDestroyed() ? mainWindow.isVisible() : '?'));
-    // 非用户主动隐藏（如 Windows"显示桌面"给分层窗口发的 SW_HIDE）→ 立即恢复
-    if (!userHidden && mainWindow && !mainWindow.isDestroyed()) {
-      setImmediate(() => {
-        if (!userHidden && mainWindow && !mainWindow.isDestroyed() &&
-            data.settings.panelVisible !== false) {
-          dbg('auto-recover: show after unexpected hide');
-          mainWindow.show();
-          if (mainWindow.isMinimized()) mainWindow.restore();
-        }
-      });
+    if (IS_WIN) {
+      // 非用户主动隐藏（如 Windows"显示桌面"给分层窗口发的 SW_HIDE）→ 立即恢复
+      if (!userHidden && mainWindow && !mainWindow.isDestroyed()) {
+        setImmediate(() => {
+          if (!userHidden && mainWindow && !mainWindow.isDestroyed() &&
+              data.settings.panelVisible !== false) {
+            dbg('auto-recover: show after unexpected hide');
+            mainWindow.show();
+            if (mainWindow.isMinimized()) mainWindow.restore();
+          }
+        });
+      }
     }
   });
   mainWindow.on('show', () => dbg('event: show'));
@@ -675,8 +686,13 @@ if (!gotLock) {
   });
 
   app.whenReady().then(() => {
-    // Windows 通知归属的应用 ID
-    app.setAppUserModelId('com.trae.workassistant');
+    if (IS_WIN) {
+      // Windows 通知归属的应用 ID
+      app.setAppUserModelId('com.trae.workassistant');
+    } else if (IS_MAC) {
+      // Mac：纯菜单栏应用，隐藏 Dock 图标（面板 + 托盘常驻，不占 Dock）
+      if (app.dock) app.dock.hide();
+    }
     data = loadData();
     // 同步开机自启状态（与用户在系统中设置保持一致）
     data.settings.autoStart = app.getLoginItemSettings().openAtLogin;
@@ -696,19 +712,21 @@ if (!gotLock) {
     setInterval(updateMouseIgnore, 60);
 
     // 看门狗：面板应显示却不可见（被系统动作意外隐藏）时自动恢复。
-    // 注意：外部 SW_HIDE 不会触发 Electron 的 'hide' 事件（实测），只能靠轮询兜底，
-    // 250ms 间隔使"显示桌面"类隐藏最长仅闪约 1/4 秒。
-    setInterval(() => {
-      if (!mainWindow || mainWindow.isDestroyed()) return;
-      if (userHidden || userMinimized || data.settings.panelVisible === false) return;
-      if (!mainWindow.isVisible()) {
-        dbg('watchdog: panel invisible unexpectedly → show()');
-        mainWindow.show();
-      } else if (mainWindow.isMinimized()) {
-        dbg('watchdog: panel minimized unexpectedly → restore()');
-        mainWindow.restore();
-      }
-    }, 250);
+    // 仅 Windows 需要：外部 SW_HIDE 不会触发 Electron 的 'hide' 事件（实测），只能靠轮询兜底，
+    // 250ms 间隔使"显示桌面"类隐藏最长仅闪约 1/4 秒。Mac 无此问题。
+    if (IS_WIN) {
+      setInterval(() => {
+        if (!mainWindow || mainWindow.isDestroyed()) return;
+        if (userHidden || userMinimized || data.settings.panelVisible === false) return;
+        if (!mainWindow.isVisible()) {
+          dbg('watchdog: panel invisible unexpectedly → show()');
+          mainWindow.show();
+        } else if (mainWindow.isMinimized()) {
+          dbg('watchdog: panel minimized unexpectedly → restore()');
+          mainWindow.restore();
+        }
+      }, 250);
+    }
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
