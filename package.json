@@ -1,7 +1,7 @@
 {
   "name": "work-assistant",
-  "version": "1.5.1",
-  "description": "Windows 工作助手 - 半透明每日待办悬浮面板",
+  "version": "1.5.2",
+  "description": "工作助手 - 半透明每日待办悬浮面板（Windows / macOS）",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -48,7 +48,10 @@
       "icon": "assets/icon.icns",
       "category": "public.app-category.productivity",
       "identity": null,
-      "artifactName": "work-assistant-${version}-mac.${ext}"
+      "artifactName": "work-assistant-${version}-mac.${ext}",
+      "extendInfo": {
+        "LSUIElement": true
+      }
     },
     "publish": [
       {

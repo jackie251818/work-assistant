@@ -300,7 +300,7 @@
     $('swRemind').classList.toggle('on', formRemind);
     $('fTime').hidden = !formRemind;
     $('remindMsg').textContent = formRemind
-      ? '将在每日该时间弹出 Windows 通知'
+      ? '将在每日该时间发送系统通知'
       : '关闭后仅展示，不弹系统通知';
   }
 

@@ -733,6 +733,8 @@ body.collapsed .collapsed-bar {
   display: flex;
   gap: 2px;
   flex-shrink: 0;
+  /* 收起横条整体可拖动，但按钮必须始终可点击（否则点击会被当成拖拽吞掉） */
+  -webkit-app-region: no-drag;
 }
 .cb-btn {
   width: 22px;

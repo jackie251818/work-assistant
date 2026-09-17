@@ -1,10 +1,10 @@
 # 工作助手（Work Assistant）
 
-一款适配 Windows 的半透明悬浮待办面板，帮助你把每日要做的事情钉在桌面上。
+一款适配 Windows / macOS 的半透明悬浮待办面板，帮助你把每日要做的事情钉在桌面上。
 
-![平台](https://img.shields.io/badge/platform-Windows-0078D4)
+![平台](https://img.shields.io/badge/platform-Windows%20%7C%20macOS-0078D4)
 ![技术栈](https://img.shields.io/badge/Electron-33+-47848F)
-![版本](https://img.shields.io/badge/version-1.5.1-blue)
+![版本](https://img.shields.io/badge/version-1.5.2-blue)
 ![许可](https://img.shields.io/badge/license-MIT-green)
 ![下载](https://img.shields.io/github/v/release/jackie251818/work-assistant?display_name=tag&sort=semver)
 [![Release](https://img.shields.io/badge/⬇️_下载-Releases-0ea5e9)](https://github.com/jackie251818/work-assistant/releases/latest)
@@ -345,6 +345,12 @@ git push origin feat/your-feature-name
 ---
 
 ## 更新日志
+
+### v1.5.2 (2026-09-17)
+
+- 修复（macOS）：面板收起后迷你横条右侧的「▼」展开按钮（及「📌」按钮）点击无效 — 按钮组此前被窗口拖拽区域吞掉点击，现已恢复正常
+- 修复（macOS）：设置页与事项编辑表单中残留的「Windows 通知」「登录 Windows」等平台专属文案，统一改为「系统通知」「登录系统」等中性表述
+- 修复（macOS）：Dock 中出现花屏/噪点图标 — 使用 Apple 官方 `iconutil` 重新生成包含 16～1024 全尺寸的标准 icns；同时声明 `LSUIElement`，应用作为纯菜单栏程序运行，不再出现在 Dock
 
 ### v1.5.1 (2026-09-15)
 

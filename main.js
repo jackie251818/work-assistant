@@ -373,7 +373,11 @@ function updateTrayMenu() {
 }
 
 function createTray() {
-  const icon = nativeImage.createFromPath(ASSET('tray.png'));
+  // macOS 使用 template image（自动适配深/浅色模式），Windows 用彩色
+  const icon = IS_MAC
+    ? nativeImage.createFromPath(ASSET('trayTemplate.png'))
+    : nativeImage.createFromPath(ASSET('tray.png'));
+  if (IS_MAC) icon.setTemplateImage(true);
   tray = new Tray(icon);
   updateTrayMenu();
   tray.on('click', togglePanel);

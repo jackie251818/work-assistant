@@ -264,8 +264,16 @@ function drawCheck(c, P) {
   c.line(P(116), P(158), P(168), P(98), P(20), [0x07, 0x1a, 0x2c], 255);
 }
 
+/** 托盘专用：透明背景 + 小尺寸对勾，四周留白 */
+function drawTrayCheck(c, P) {
+  // 细一点的对勾，居中，透明背景
+  // 设计坐标 256 下，对勾约占 120×90 区域 → 44px 下约 20×15px，四周留白
+  c.line(P(96), P(130), P(120), P(156), P(16), [0x07, 0x1a, 0x2c], 255);
+  c.line(P(120), P(156), P(164), P(102), P(16), [0x07, 0x1a, 0x2c], 255);
+}
+
 /* ---------------- 生成 ---------------- */
-const SS = 512; // 超采样画布
+const SS = 1024; // 超采样画布（需覆盖 icns 最大 1024 尺寸）
 const P = (v) => Math.round((v / 256) * SS);
 
 const fullCanvas = new Canvas(SS);
@@ -276,6 +284,10 @@ const simpleCanvas = new Canvas(SS);
 drawBackground(simpleCanvas, P);
 drawCheck(simpleCanvas, P);
 
+// 托盘专用画布：透明背景 + 简洁对勾（四周留白）
+const trayCanvas = new Canvas(SS);
+drawTrayCheck(trayCanvas, P);
+
 const assetsDir = path.join(__dirname, '..', 'assets');
 fs.mkdirSync(assetsDir, { recursive: true });
 
@@ -283,9 +295,27 @@ fs.writeFileSync(
   path.join(assetsDir, 'icon.png'),
   encodePNG(256, 256, fullCanvas.downscale(256))
 );
+// 彩色托盘图标（Windows 用）：透明背景 + 对勾
 fs.writeFileSync(
   path.join(assetsDir, 'tray.png'),
-  encodePNG(32, 32, simpleCanvas.downscale(32))
+  encodePNG(44, 44, trayCanvas.downscale(44))
+);
+
+// macOS template 托盘图标：保留 alpha，RGB 设为纯黑
+// macOS 会自动根据 alpha 渲染为深/浅色模式适配的单色图标
+function makeTemplate(rgba) {
+  const out = Buffer.alloc(rgba.length);
+  for (let i = 0; i < rgba.length; i += 4) {
+    out[i] = 0;       // R = 0
+    out[i + 1] = 0;   // G = 0
+    out[i + 2] = 0;   // B = 0
+    out[i + 3] = rgba[i + 3]; // A 保持不变
+  }
+  return out;
+}
+fs.writeFileSync(
+  path.join(assetsDir, 'trayTemplate.png'),
+  encodePNG(44, 44, makeTemplate(trayCanvas.downscale(44)))
 );
 
 // ICO：小尺寸简洁对勾，大尺寸完整日历
@@ -296,15 +326,61 @@ const icoPngs = icoSizes.map((s) => {
 });
 fs.writeFileSync(path.join(assetsDir, 'icon.ico'), encodeICO(icoSizes, icoPngs));
 
-// ICNS：macOS 应用图标（16~512，小尺寸用简洁对勾，大尺寸用完整日历）
-const icnsSizes = [16, 32, 64, 128, 256, 512];
-const icnsPngs = icnsSizes.map((s) => {
-  const src = s <= 48 ? simpleCanvas : fullCanvas;
-  return encodePNG(s, s, src.downscale(s));
-});
-fs.writeFileSync(path.join(assetsDir, 'icon.icns'), encodeICNS(icnsSizes, icnsPngs));
+// ICNS：macOS 应用图标
+// 优先用系统自带 iconutil 从 .iconset 生成（Apple 官方格式，尺寸齐全含 1024，
+// 避免手写 icns 类型码在部分 macOS 上被错误解码成花屏噪点）；
+// 非 macOS 或 iconutil 不可用时回退到手写打包。
+const icnsPath = path.join(assetsDir, 'icon.icns');
+
+function buildIcnsViaIconutil(outputPath) {
+  if (process.platform !== 'darwin') return false;
+  try {
+    const { execFileSync } = require('child_process');
+    const iconsetDir = path.join(assetsDir, 'icon.iconset');
+    fs.rmSync(iconsetDir, { recursive: true, force: true });
+    fs.mkdirSync(iconsetDir, { recursive: true });
+    // iconset 标准文件名 → 实际像素尺寸
+    const specs = [
+      ['icon_16x16.png', 16],
+      ['icon_16x16@2x.png', 32],
+      ['icon_32x32.png', 32],
+      ['icon_32x32@2x.png', 64],
+      ['icon_128x128.png', 128],
+      ['icon_128x128@2x.png', 256],
+      ['icon_256x256.png', 256],
+      ['icon_256x256@2x.png', 512],
+      ['icon_512x512.png', 512],
+      ['icon_512x512@2x.png', 1024]
+    ];
+    for (const [name, s] of specs) {
+      const src = s <= 48 ? simpleCanvas : fullCanvas;
+      fs.writeFileSync(path.join(iconsetDir, name), encodePNG(s, s, src.downscale(s)));
+    }
+    execFileSync(
+      'iconutil',
+      ['-c', 'icns', iconsetDir, '-o', outputPath],
+      { stdio: 'pipe' }
+    );
+    fs.rmSync(iconsetDir, { recursive: true, force: true });
+    return true;
+  } catch (err) {
+    console.warn('iconutil 生成 icns 失败，回退到手写格式：' + err.message);
+    return false;
+  }
+}
+
+let icnsNote = '';
+if (!buildIcnsViaIconutil(icnsPath)) {
+  const icnsSizes = [16, 32, 64, 128, 256, 512];
+  const icnsPngs = icnsSizes.map((s) => {
+    const src = s <= 48 ? simpleCanvas : fullCanvas;
+    return encodePNG(s, s, src.downscale(s));
+  });
+  fs.writeFileSync(icnsPath, encodeICNS(icnsSizes, icnsPngs));
+  icnsNote = '（手写格式：' + icnsSizes.join('/') + '）';
+}
 
 console.log(
   '图标已生成: icon.png, tray.png, icon.ico (' + icoSizes.join('/') +
-  '), icon.icns (' + icnsSizes.join('/') + ')'
+  '), icon.icns (iconutil 标准格式 16~1024)' + icnsNote
 );
