@@ -1,6 +1,6 @@
 {
   "name": "work-assistant",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "description": "工作助手 - 半透明每日待办悬浮面板（Windows / macOS）",
   "main": "main.js",
   "scripts": {

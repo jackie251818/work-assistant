@@ -571,7 +571,19 @@ function broadcastDataChange() {
 ipcMain.handle('data:get', () => data);
 
 ipcMain.handle('data:save', (_e, payload) => {
-  if (payload && Array.isArray(payload.tasks)) data.tasks = payload.tasks;
+  if (payload && Array.isArray(payload.tasks)) {
+    // 按 ID 合并 tasks：始终保留主进程的 done 字段
+    // 因为 done 只能被 task:toggle 精准修改，settings 窗口从不碰它
+    // settings 窗口的 done 副本永远是过时的，整体替换会把正确的 done 回滚
+    const existingMap = new Map(data.tasks.map((t) => [t.id, t]));
+    data.tasks = payload.tasks.map((incoming) => {
+      const existing = existingMap.get(incoming.id);
+      if (existing) {
+        return Object.assign({}, incoming, { done: existing.done || {} });
+      }
+      return incoming;
+    });
+  }
   if (payload && payload.settings) data.settings = Object.assign(data.settings, payload.settings);
   if (payload && typeof payload.notes === 'string') data.notes = payload.notes;
   saveData();
