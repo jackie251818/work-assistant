@@ -39,8 +39,9 @@ Git tag 格式固定为 `v` + 版本号，如 `v1.3.1`。
 
 ## 2. 发布前检查
 
+- [ ] **先同步远程**：`git pull --rebase origin main`，确认远程没有别人刚推的新版本号（多端协作时版本号撞车会导致 rebase 冲突，见第 5 节）
 - [ ] 代码已在本机验证通过（`node --check main.js` 等语法检查 + 实际运行冒烟）
-- [ ] `package.json` 的 `version` 已改为新版本号（**唯一版本号来源**，打包与 `latest.yml` 都取它）
+- [ ] `package.json` 的 `version` 已改为新版本号（**唯一版本号来源**，打包与 `latest.yml` 都取它；改前先检查 `git tag -l "v*"` 确认该版本号尚未被占用）
 - [ ] `README.md`：顶部版本 badge 已更新；「更新日志」已追加新版本条目
 - [ ] 所有改动已 git commit（见第 5 步，顺序上也可先打包再提交，但必须在创建 Release 前推送 tag 对应代码）
 
@@ -62,9 +63,16 @@ Start-Sleep -Seconds 2
 robocopy 'd:\Users\Administrator\Desktop\工作助手' 'D:\dr-build\app' /MIR `
   /XD 'd:\Users\Administrator\Desktop\工作助手\dist' `
       'd:\Users\Administrator\Desktop\工作助手\.git' `
+      'd:\Users\Administrator\Desktop\工作助手\dist_mac' `
   /XF '*.log'
 # robocopy 退出码 < 8 都算成功（1 = 有文件被复制）
 ```
+
+> ⚠️ **360 主动防御（ZhuDongFangYu）会锁 `app.asar`**：即使切到英文路径，360 实时扫描仍可能锁住 `dist\win-unpacked\resources\app.asar`，报 `The process cannot access the file because it is being used by another process`。
+> **解决方案**（按优先级）：
+> 1. 临时暂停 360 主动防御（托盘右键 → 暂停保护）
+> 2. 在打包前先删除整个 `dist` 目录：`Remove-Item -Recurse -Force 'D:\dr-build\app\dist' -ErrorAction SilentlyContinue`
+> 3. 换一个全新的构建目录（如 `D:\dr-build2\app`），让 360 没有历史文件可锁
 
 ### 3.2 设置国内镜像并打包
 
@@ -211,6 +219,26 @@ git tag v1.3.1
 git push origin v1.3.1
 ```
 
+### 5.1 版本号撞车 / Rebase 冲突处理
+
+多端协作时（如 Mac 端和 Windows 端各自改了 `package.json` 的 `version`），`git push` 会被拒绝，`git pull --rebase` 会产生冲突。
+
+**不要手动解冲突**（package.json / package-lock.json 三路合并极易出错）。直接重来：
+
+```powershell
+# 1. 放弃 rebase
+git rebase --abort
+
+# 2. 强制回到远程最新状态
+git fetch origin
+git reset --hard origin/main
+
+# 3. 重新应用你的改动（改版本号 + 业务代码），然后正常 commit + push
+#    如果之前改了版本号，此时需要升一个更高的版本号（远程已占用的不能重发）
+```
+
+这比手动解冲突快得多，且不会把 package-lock.json 合并坏。
+
 ---
 
 ## 6. README 与发布说明更新（每次必做）
@@ -278,6 +306,7 @@ updater[info] Update for version 1.3.1 is not available (latest version: 1.3.1, 
 | 检查结果一直是"已是最新" | 确认 Release 不是 pre-release（客户端默认仅接受稳定版）；确认 `latest.yml` 的 `version` 确实高于客户端版本。 |
 | 发布后用户无反应 | 客户端仅在**启动时**检查一次；让用户重启应用，或在设置页手动检查。 |
 | 用户下载/更新很慢 | GitHub 资产在境外。失败会静默跳过不影响使用；必要时在设置页重试。长期可改为 generic 源（对象存储）。 |
+| 打包报 `app.asar: The process cannot access the file` | 360 主动防御（ZhuDongFangYu）实时扫描锁住了 app.asar。暂停 360 或删 `dist` 目录重试，详见第 3.1 节警告。 |
 | 打包报 makensis `failed opening file`，Setup 仅 190KB | 360 实时扫描占用（也可能是中文路径）。英文路径下重试 electron-builder。 |
 | 打包报 PublishManager 错误 | 漏了 `--publish never`；产物本身通常已生成，重新加参数打包即可。 |
 | 网页/命令上传到一半失败 | 删掉 Release 中传了一半的资产后重传该文件；exe 与 yml/blockmap 必须最终齐全。 |
@@ -290,15 +319,16 @@ updater[info] Update for version 1.3.1 is not available (latest version: 1.3.1, 
 ## 9. 一页纸检查清单（每次发版照抄）
 
 1. [ ] 改代码、本机验证
-2. [ ] `package.json` 升版本号
-3. [ ] README badge + 更新日志
-4. [ ] git commit & push
-5. [ ] 英文路径打包（镜像变量 + `--publish never`），确认三件套
-6. [ ] 本地静默安装冒烟
-7. [ ] 创建正式 Release `vX.Y.Z`，上传 exe + latest.yml + blockmap，等待全部 uploaded
-8. [ ] 匿名下载验证 latest.yml / exe（HTTP 200/206）
-9. [ ] 重启应用看 debug.log 检查正常
-10. [ ] 通知用户（≤1.2.0 老用户需手动安装一次）
+2. [ ] `git pull --rebase origin main` 同步远程（避免版本号撞车）
+3. [ ] `package.json` 升版本号（先 `git tag -l "v*"` 确认没被占用）
+4. [ ] README badge + 更新日志
+5. [ ] git commit & push
+6. [ ] 英文路径打包（镜像变量 + `--publish never`），确认三件套
+7. [ ] 本地静默安装冒烟
+8. [ ] 创建正式 Release `vX.Y.Z`，上传 exe + latest.yml + blockmap，等待全部 uploaded
+9. [ ] 匿名下载验证 latest.yml / exe（HTTP 200/206）
+10. [ ] 重启应用看 debug.log 检查正常
+11. [ ] 通知用户（≤1.2.0 老用户需手动安装一次）
 
 ---
 
@@ -306,4 +336,5 @@ updater[info] Update for version 1.3.1 is not available (latest version: 1.3.1, 
 
 | 日期 | 版本 | 更新内容 | 触发原因 |
 | :--- | :--- | :--- | :--- |
+| 2026-09-22 | v1.5.3 | 补充三个实战经验：(1) 发布前先 `git pull` 防版本号撞车 + `git tag -l` 检查占用；(2) 360 主动防御锁 `app.asar` 的解决方案（暂停/删 dist/换目录）；(3) rebase 冲突的快速处理方案（abort + reset --hard + 重新应用） | v1.5.3 发版时遇到远程已有 v1.5.2、360 锁 app.asar、rebase 冲突 |
 | 2026-09-13 | v1.3.0 | 初版发布流程文档：electron-updater + GitHub Releases 三件套发布链路、打包镜像/中文路径/360 坑、发布后验证与排错 | v1.3.0 首次引入自动更新，需固化发版 SOP |
